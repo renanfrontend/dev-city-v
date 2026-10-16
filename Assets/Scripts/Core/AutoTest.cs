@@ -65,6 +65,53 @@ namespace DevCity
             yield return null;
         }
 
+        int repairs;
+
+        /// <summary>
+        /// Pilota o carro por <paramref name="seconds"/>: acelera até <paramref name="targetKmh"/> e freia/desvia
+        /// quando há obstáculo à frente. Sem isso o carro bate num prédio a ~150 km/h, pega fogo e explode com o
+        /// jogador dentro, o que zera o nível de procurado e invalida a etapa da polícia. Se mesmo assim o carro
+        /// quase morrer, ele é consertado e o fato vai para o log.
+        /// </summary>
+        IEnumerator Drive(VehicleController car, float seconds, float targetKmh, float steerBias)
+        {
+            float t = 0f;
+            while (t < seconds)
+            {
+                t += Time.unscaledDeltaTime;
+                float speed = car.Speed;
+                Vector3 o = car.transform.position + Vector3.up * 0.8f;
+                Vector3 fwd = car.transform.forward;
+                float look = Mathf.Max(14f, speed * 1.6f);
+                bool blocked = Physics.Raycast(o, fwd, look, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
+                float steer = steerBias, throttle = speed * 3.6f < targetKmh ? 1f : 0f;
+                if (blocked)
+                {
+                    bool left = Physics.Raycast(o, Quaternion.Euler(0f, -30f, 0f) * fwd, look, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
+                    bool right = Physics.Raycast(o, Quaternion.Euler(0f, 30f, 0f) * fwd, look, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
+                    steer = right && !left ? -1f : 1f;
+                    throttle = speed > 6f ? -1f : 0f;
+                }
+                PlayerController.ScriptedDrive = new Vector3(throttle, steer, 0f);
+                yield return null;
+            }
+        }
+
+        /// <summary>Conserta o carro quando está quase destruído, para ele não explodir com o jogador dentro.</summary>
+        IEnumerator KeepCarAlive(VehicleController car)
+        {
+            while (true)
+            {
+                if (!car.Destroyed && (car.Health < car.Spec.Health * 0.4f || car.Burning))
+                {
+                    car.Repair();
+                    repairs++;
+                    Log($"carro consertado ({repairs}x) para o teste não morrer numa batida");
+                }
+                yield return null;
+            }
+        }
+
         IEnumerator Start()
         {
             var gm = GameManager.I;
@@ -95,13 +142,13 @@ namespace DevCity
             yield return new WaitForSecondsRealtime(1.2f);
             Log($"no carro: {(p.Vehicle == car ? "sim" : "NÃO")}");
 
-            // acelera reto e depois faz curva
-            PlayerController.ScriptedDrive = new Vector3(1f, 0f, 0f);
+            // acelera reto e depois faz curva (com um piloto que freia/desvia de obstáculos à frente)
+            StartCoroutine(KeepCarAlive(car));
+            StartCoroutine(Drive(car, 5f, 150f, 0f));
             yield return MeasureFps("dirigindo", 5f);
             Log($"velocidade após 5 s: {car.Speed * 3.6f:0} km/h | capotou: {(car.transform.up.y < 0.3f ? "sim" : "não")} | vida do carro {car.Health:0}");
             yield return Shot("3_dirigindo");
-            PlayerController.ScriptedDrive = new Vector3(0.6f, 1f, 0f);
-            yield return new WaitForSecondsRealtime(2.5f);
+            yield return Drive(car, 2.5f, 60f, 1f);
             PlayerController.ScriptedDrive = new Vector3(-1f, 0f, 0f);
             yield return new WaitForSecondsRealtime(2f);
             PlayerController.ScriptedDrive = null;
@@ -130,6 +177,7 @@ namespace DevCity
             gm.Minimap.ShowBigMap(false);
             gm.SetPlaying();
 
+            if (gm.Player.IsDead) Log("AVISO: o jogador morreu durante o teste");
             Log($"FIM | erros {errors} | exceções {exceptions}" + (firstError != null ? "\nPrimeiro erro: " + firstError : ""));
             yield return new WaitForSecondsRealtime(1f);
             Application.Quit();

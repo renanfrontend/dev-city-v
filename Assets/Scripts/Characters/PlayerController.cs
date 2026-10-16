@@ -306,8 +306,8 @@ namespace DevCity
                 amount -= a;
             }
             Health -= amount;
-            if (amount >= 15f || Health <= 0f)
-                Debug.Log($"[Dano] jogador -{amount:0} (vida {Health:0}, colete {Armor:0}) em {point} | no carro: {Vehicle != null} | origem: {System.Environment.StackTrace}");
+            if (Health <= 0f)
+                Debug.Log($"[Dano] jogador -{amount:0} (vida {Health:0}, colete {Armor:0}) em {point} | no carro: {Vehicle != null}");
             gm.Hud.DamageFlash();
             if (Health <= 0f)
             {

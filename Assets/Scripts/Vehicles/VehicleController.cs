@@ -117,6 +117,14 @@ namespace DevCity
             return transform.TransformPoint(new Vector3((left ? -1f : 1f) * (Spec.Width / 2f + 0.9f), 0.15f, Spec.Length * 0.05f));
         }
 
+        /// <summary>Restaura a vida e apaga o fogo (usado pelo AutoTest para o carro não explodir com o jogador dentro).</summary>
+        public void Repair()
+        {
+            if (Destroyed) return;
+            Health = Spec.Health;
+            Burning = false;
+        }
+
         public void Horn() => Sfx.PlayAt(Sfx.Horn, transform.position, 0.8f);
         public void ToggleLights() => lightsOn = !lightsOn;
 
