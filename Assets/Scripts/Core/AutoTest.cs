@@ -55,6 +55,21 @@ namespace DevCity
             Log($"{label}: {frames / seconds:0.0} FPS médio, pior quadro {worst * 1000f:0} ms");
         }
 
+        /// <summary>Fotos de lado da porta do motorista (a câmera normal fica atrás do carro e esconde o personagem).</summary>
+        IEnumerator SideShots(VehicleController car, string name)
+        {
+            var cam = GameManager.I.Cam;
+            cam.Override = true;
+            for (int i = 0; i < 3; i++)
+            {
+                yield return new WaitForSecondsRealtime(i == 0 ? 0.5f : 0.9f);
+                cam.transform.position = car.transform.TransformPoint(new Vector3(-6f, 1.8f, 1.5f));
+                cam.transform.rotation = Quaternion.LookRotation(car.transform.TransformPoint(new Vector3(-0.8f, 0.8f, 0f)) - cam.transform.position);
+                yield return Shot($"{name}_{i + 1}");
+            }
+            cam.Override = false;
+        }
+
         IEnumerator Shot(string name)
         {
             yield return new WaitForEndOfFrame();
@@ -139,8 +154,21 @@ namespace DevCity
             p.Teleport(car.DoorPoint(true));
             yield return new WaitForSecondsRealtime(0.5f);
             p.ForceEnter(car);
-            yield return new WaitForSecondsRealtime(1.2f);
-            Log($"no carro: {(p.Vehicle == car ? "sim" : "NÃO")}");
+            yield return SideShots(car, "3a_entrando");
+            for (float w = 0f; w < 6f && p.Vehicle != car; w += 0.2f) yield return new WaitForSecondsRealtime(0.2f);
+            Log($"no carro: {(p.Vehicle == car ? "sim" : "NÃO")} | animação de entrar: {(CarActions.Enter != null && p.Model.Rigged ? "sim" : "não")}");
+
+            // sai do carro (animação "Exiting Car") e entra de novo
+            Log($"carro parado? {car.Speed * 3.6f:0.0} km/h | pos jogador {p.transform.position}");
+            p.ExitVehicle(false, true);
+            Log($"saindo com animação: {(p.Busy ? "sim" : "não")}");
+            yield return SideShots(car, "3b_saindo");
+            for (float w = 0f; w < 6f && p.Busy; w += 0.2f) yield return new WaitForSecondsRealtime(0.2f);
+            Log($"saiu do carro: {(p.Vehicle == null ? "sim" : "NÃO")} | distância do carro {Vector3.Distance(p.transform.position, car.transform.position):0.0} m");
+            yield return Shot("3c_fora");
+            p.ForceEnter(car);
+            for (float w = 0f; w < 7f && p.Vehicle != car; w += 0.2f) yield return new WaitForSecondsRealtime(0.2f);
+            Log($"entrou de novo: {(p.Vehicle == car ? "sim" : "NÃO")}");
             Log($"carro {car.DisplayName}: {(car.transform.Find("Carroceria/" + VehicleFactory.ModelName(car.Kind)) != null ? "modelo 3D" : "caixas")} | {car.Spec.Length:0.0} x {car.Spec.Width:0.0} m | raio da roda {car.Spec.WheelRadius:0.00} m");
 
             // acelera reto e depois faz curva (com um piloto que freia/desvia de obstáculos à frente)
@@ -217,6 +245,34 @@ namespace DevCity
             Log($"explosão: {destrocos} destroços voando");
             yield return Shot("10_destrocos");
             yield return new WaitForSecondsRealtime(2f);
+
+            // desafio 4: moto (2 rodas + estabilizador)
+            if (!gm.City.RandomLanePoint(pj.Position, 10f, 80f, out var mLane, out var mFrom, out var mTo)) mLane = pj.Position + pj.transform.right * 6f;
+            var moto = VehicleFactory.Create(VehicleKind.Moto, mLane, Quaternion.LookRotation((CityGenerator.NodePos(mTo) - CityGenerator.NodePos(mFrom)).normalized));
+            pj.Teleport(moto.DoorPoint(true));
+            yield return new WaitForSecondsRealtime(1f);
+            Log($"moto parada: em pé? up.y={moto.transform.up.y:0.00} | altura {moto.transform.position.y - mLane.y:0.00} m");
+            pj.ForceEnter(moto);
+            for (float w = 0f; w < 3f && pj.Vehicle != moto; w += 0.2f) yield return new WaitForSecondsRealtime(0.2f);
+            Log($"na moto: {(pj.Vehicle == moto ? "sim" : "NÃO")}");
+            StartCoroutine(KeepCarAlive(moto));
+            yield return Drive(moto, 4f, 110f, 0f);
+            Log($"moto após 4 s: {moto.Speed * 3.6f:0} km/h | up.y={moto.transform.up.y:0.00}");
+            yield return Shot("11_moto");
+            StartCoroutine(Drive(moto, 3f, 60f, 0.7f));
+            float maxLean = 0f, leanKmh = 0f;
+            for (float w = 0f; w < 3f; w += Time.unscaledDeltaTime)
+            {
+                float lean = Vector3.SignedAngle(Vector3.ProjectOnPlane(Vector3.up, moto.transform.forward), moto.transform.up, moto.transform.forward);
+                if (Mathf.Abs(lean) > Mathf.Abs(maxLean)) { maxLean = lean; leanKmh = moto.Speed * 3.6f; }
+                if (w > 1.2f && w - Time.unscaledDeltaTime <= 1.2f) yield return Shot("12_moto_curva");
+                yield return null;
+            }
+            Log($"moto na curva: inclinação máxima {maxLean:0}° a {leanKmh:0} km/h (negativo = para a direita)");
+            PlayerController.ScriptedDrive = new Vector3(-1f, 0f, 0f);
+            yield return new WaitForSecondsRealtime(2.5f);
+            PlayerController.ScriptedDrive = null;
+            Log($"moto depois de frear: {moto.Speed * 3.6f:0} km/h | ainda montado: {(pj.Vehicle == moto ? "sim" : "não (caiu)")} | up.y={moto.transform.up.y:0.00}");
 
             if (gm.Player.IsDead) Log("AVISO: o jogador morreu durante o teste");
             Log($"FIM | erros {errors} | exceções {exceptions}" + (firstError != null ? "\nPrimeiro erro: " + firstError : ""));

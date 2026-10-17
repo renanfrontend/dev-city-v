@@ -109,8 +109,19 @@ Fontes gratuitas boas: **Kenney** (CC0), **Quaternius** (CC0) e **Poly Pizza** (
    - cada carro civil sorteia uma das 10 versões.
    Para o código conseguir ler a malha e a textura, elas precisam de **Read/Write**. Quem liga isso é `Assets/Editor/VehicleImportSettings.cs`, um **AssetPostprocessor**: código que roda sozinho toda vez que o Unity importa um arquivo daquela pasta.
 2. **Peças voando na explosão** ✅ feito em `VehicleController.SpawnDebris()`. As peças ficam em `Assets/Resources/Veiculos/Destrocos/`. Cada explosão solta de 5 a 6 peças queimadas, com `Rigidbody` e `BoxCollider`, que somem depois de 25 s. Experimente mudar a quantidade (`Random.Range(5, 7)`) e a força (`Random.Range(5f, 11f)`).
-3. **Animação de entrar no carro**: na Mixamo há **Entering Car** e **Exiting Car**. Junte com o tutorial de personagens e troque o "deslize" de `PlayerController.EnterRoutine` pela animação.
-4. **Moto**: o Kit não tem moto, mas há modelos CC0 na Quaternius. Comece com 2 rodas e um "estabilizador" que mantém a moto em pé (`Body.AddTorque`).
+3. **Animação de entrar no carro** ✅ feito com **Entering Car** e **Exiting Car** da Mixamo (salvas como `EnterCar.fbx` e `ExitCar.fbx` em `Assets/Mixamo/Animacoes/`).
+   - O `MixamoImporter` reconhece os nomes (`enter` = entrar, `exit` = sair), cria os estados `EntrandoNoCarro` e `SaindoDoCarro` no Animator e acelera as duas animações (~5,5 s viram ~3,4 s, perto do GTA).
+   - **O problema:** a animação move o *corpo* (anda até o banco e senta), mas o objeto do jogador fica parado. Se começar no lugar errado, ele senta fora do carro.
+   - **A solução:** o importador mede quanto o corpo anda e gira (entrar: 1,8 m para a frente e 95° para a esquerda) e grava em `Resources/Personagens/AcoesCarro.json`. O jogo (`CarActions.cs`) faz a conta ao contrário: "para terminar no banco, olhando para a frente do carro, tenho que começar 1,8 m antes, girado 95°". Esse é o ponto da porta onde o jogador para.
+   - Durante a animação o carro fica freado e o jogador sobe do chão até a altura do banco. No fim, ele "gruda" no banco. O log `[Carro] ... o quadril pulou X m` mostra o tamanho do "pulo" (hoje ~0,2 m ao entrar e 0,04 m ao sair).
+   - Só a saída calma com **F** usa a animação. Pular do carro andando, carro destruído ou afundando e a troca de personagem saem na hora.
+   - Experimente mudar a velocidade das animações em `MixamoImporter.BuildController` (os números `1.6f` e `1.8f`) e rodar **Dev City → Preparar personagens Mixamo** de novo.
+4. **Moto** ✅ feito: a **Raio 600** (`VehicleKind.Moto`), com 4% de chance no trânsito.
+   - O visual é montado com caixas e cilindros em `Vehicles/MotoBuilder.cs`. Ainda não há um modelo 3D CC0 de moto na Kenney nem na Quaternius.
+   - **2 rodas no meio:** a física é a mesma dos carros, só que usa as rodas 0 (frente) e 2 (trás). A suspensão é 2× mais dura, porque 2 rodas seguram o peso que 4 seguravam.
+   - **O estabilizador:** com as rodas no meio, nada segura a moto de lado. `VehicleController.Balance()` calcula uma inclinação-alvo (em pé quando parada, deitada para dentro nas curvas, até 40°) e usa `Body.AddTorque` como uma **mola com amortecedor**: força proporcional ao erro (`err * 60`) menos a velocidade de giro (`rollVel * 9`). Sem o amortecedor a moto balança de um lado para o outro. Teste trocar o 9 por 1!
+   - Se a moto tombar mesmo assim (`up.y < 0,4`), o piloto cai no chão.
+   - Na moto o jogador monta rápido, sem a animação de entrar no carro.
 
 ---
 

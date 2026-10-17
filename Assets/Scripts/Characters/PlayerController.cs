@@ -187,15 +187,34 @@ namespace DevCity
         {
             entering = true;
             var gm = GameManager.I;
+            var act = Model.Rigged && !v.TwoWheeler ? CarActions.Enter : null; // na moto, monta rápido
+            // se estava caído no chão, levanta antes de entrar
+            knockT = 0f;
+            Model.transform.localRotation = Quaternion.identity;
+            Model.transform.localPosition = Vector3.zero;
+
+            // Onde ficar na porta para a animação terminar em cima do banco:
+            // o corpo anda act.Move e gira act.Turn; então começamos "girado ao contrário" e recuados.
+            float carYaw = v.transform.eulerAngles.y;
+            Quaternion startRot = Quaternion.Euler(0f, carYaw - (act != null ? act.Turn : 0f), 0f);
             Vector3 door = v.DoorPoint(true);
+            if (act != null)
+            {
+                Vector3 seat = v.Seat.position;
+                door = seat - startRot * act.Move * Model.BodyScale;
+            }
+            door.y = transform.position.y;
+
             Vector3 start = transform.position;
+            Quaternion startLook = transform.rotation;
             float t = 0f;
             // anda até a porta
             while (t < 0.3f)
             {
                 t += Time.deltaTime;
                 CC.enabled = false;
-                transform.position = Vector3.Lerp(start, new Vector3(door.x, start.y, door.z), t / 0.3f);
+                transform.position = Vector3.Lerp(start, door, t / 0.3f);
+                if (act != null) transform.rotation = Quaternion.Slerp(startLook, startRot, t / 0.3f);
                 Model.MoveSpeed = 3f;
                 yield return null;
             }
@@ -205,6 +224,35 @@ namespace DevCity
             // roubar carro é crime (se alguém vir); roubar viatura sempre dá estrela
             if (v.Kind == VehicleKind.Police || v.Kind == VehicleKind.Swat) gm.Wanted.Commit(Crime.StealPoliceCar, transform.position);
             else if (hadDriver || !v.OwnedByPlayer) gm.Wanted.Commit(Crime.CarTheft, transform.position);
+
+            // animação da Mixamo "Entering Car" (se o personagem tiver)
+            if (act != null && Model.PlayAction("EntrandoNoCarro"))
+            {
+                Model.MoveSpeed = 0f;
+                // guardamos a posição em relação ao carro: se ele for empurrado, o jogador vai junto
+                Vector3 local = v.transform.InverseTransformPoint(transform.position);
+                float seatY = v.transform.InverseTransformPoint(v.Seat.position).y;
+                float yawOff = Mathf.DeltaAngle(carYaw, startRot.eulerAngles.y);
+                float timeout = act.len + 2f;
+                float logT = 0f;
+                while (timeout > 0f && !v.Destroyed)
+                {
+                    timeout -= Time.deltaTime;
+                    v.SetInput(0f, 0f, true); // carro freado enquanto o jogador entra
+                    float k = Model.ActionProgress("EntrandoNoCarro");
+                    if (AutoTest.Running && (logT += Time.deltaTime) > 0.4f) { logT = 0f; Debug.Log($"[Carro] entrando: k={k:0.00} carro {v.Speed * 3.6f:0} km/h em {v.transform.position}"); }
+                    if (k >= 0.96f || (k < 0f && timeout < act.len)) break;
+                    // na hora de sentar, o corpo sobe do chão até a altura do banco
+                    var l = local;
+                    l.y = Mathf.Lerp(local.y, seatY, Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.45f, 0.9f, k)));
+                    transform.position = v.transform.TransformPoint(l);
+                    transform.rotation = Quaternion.Euler(0f, v.transform.eulerAngles.y + yawOff, 0f);
+                    yield return null;
+                }
+                if (v.Destroyed) { entering = false; Teleport(transform.position); yield break; }
+                lastHipsGap = Model.Hips.position;
+            }
+            else lastHipsGap = Vector3.zero;
 
             Vehicle = v;
             v.SetPlayerDriver(true);
@@ -218,6 +266,63 @@ namespace DevCity
             entering = false;
             gm.Hud.ShowVehicleName(v.DisplayName);
             if (!Weapons.Def.Melee && Weapons.Def.Model != 1) Weapons.Select(Weapons.Owned[1] ? 1 : 0);
+            if (lastHipsGap != Vector3.zero)
+            {
+                // corta direto para "sentado" e mede o "pulo" do quadril (quanto menor, melhor o encaixe)
+                Model.transform.localScale = Vector3.one * 0.9f;
+                Model.SnapTo("Sentado");
+                Debug.Log($"[Carro] entrou com animação; o quadril pulou {Vector3.Distance(lastHipsGap, Model.Hips.position):0.00} m ao sentar");
+            }
+        }
+
+        Vector3 lastHipsGap;
+
+        /// <summary>
+        /// Sai do carro com a animação "Exiting Car": o corpo começa no banco, sai pela porta e
+        /// termina em pé do lado de fora. No fim, o objeto do jogador vai para onde o corpo está.
+        /// </summary>
+        IEnumerator ExitRoutine(VehicleController v, CarActions.Action act)
+        {
+            entering = true;
+            var gm = GameManager.I;
+            float seatY = v.transform.InverseTransformPoint(v.Seat.position).y;
+            Vector3 local = v.transform.InverseTransformPoint(v.Seat.position);
+            float groundY = v.transform.InverseTransformPoint(v.DoorPoint(true)).y - 0.15f;
+
+            transform.SetParent(null, true);
+            transform.localScale = Vector3.one;
+            v.SetPlayerDriver(false);
+            v.SetInput(0f, 0f, true);
+            Vehicle = null;
+            gm.Hud.ShowVehicleName(null);
+            Model.Sitting = false;
+            Model.MoveSpeed = 0f;
+            bool played = Model.PlayAction("SaindoDoCarro", 0.1f);
+
+            float timeout = act.len + 2f, logT = 0f;
+            while (timeout > 0f && !v.Destroyed)
+            {
+                timeout -= Time.deltaTime;
+                float k = Model.ActionProgress("SaindoDoCarro");
+                if (AutoTest.Running && (logT += Time.deltaTime) > 0.4f) { logT = 0f; Debug.Log($"[Carro] saindo: tocou={played} k={k:0.00} pos={transform.position}"); }
+                if (k >= 0.96f || (k < 0f && timeout < act.len)) break;
+                // ao pôr os pés para fora, desce da altura do banco até o chão
+                var l = local;
+                l.y = Mathf.Lerp(seatY, groundY, Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.15f, 0.55f, k)));
+                transform.position = v.transform.TransformPoint(l);
+                transform.rotation = Quaternion.Euler(0f, v.transform.eulerAngles.y, 0f);
+                yield return null;
+            }
+
+            // o jogador "alcança" o corpo: vai para onde o quadril está e olha para onde ele olha
+            Vector3 hips = Model.Hips.position;
+            Vector3 p = new Vector3(hips.x, transform.position.y, hips.z);
+            transform.rotation = Quaternion.Euler(0f, transform.eulerAngles.y + act.Turn, 0f);
+            Gen.SetLayerRecursive(gameObject, 2);
+            Teleport(p + Vector3.up * 0.05f);
+            Model.SnapTo("Movimento");
+            Debug.Log($"[Carro] saiu com animação; o quadril pulou {Vector3.Distance(hips, Model.Hips.position):0.00} m");
+            entering = false;
         }
 
         void DriveInput()
@@ -235,17 +340,25 @@ namespace DevCity
 
             if (v.Destroyed && v.Burning == false) { ExitVehicle(false); return; }
             if (v.Sunk) { ExitVehicle(false); return; }
-            if (Input.GetKeyDown(KeyCode.F)) ExitVehicle(v.Body.linearVelocity.magnitude > 7f);
+            if (v.TwoWheeler && v.transform.up.y < 0.4f) { ExitVehicle(true); return; } // a moto tombou: o piloto cai
+            if (Input.GetKeyDown(KeyCode.F)) ExitVehicle(v.Body.linearVelocity.magnitude > 7f, true);
         }
 
-        public void ExitVehicle(bool bail)
+        public void ExitVehicle(bool bail, bool animate = false)
         {
             var v = Vehicle;
             if (v == null) return;
             Vector3 vel = v.Body.linearVelocity;
             Vector3 p = v.DoorPoint(true);
-            if (Physics.CheckCapsule(p + Vector3.up * 0.5f, p + Vector3.up * 1.5f, 0.3f, ~(1 << 2), QueryTriggerInteraction.Ignore))
-                p = v.DoorPoint(false);
+            bool leftBlocked = Physics.CheckCapsule(p + Vector3.up * 0.5f, p + Vector3.up * 1.5f, 0.3f, ~(1 << 2), QueryTriggerInteraction.Ignore);
+            // saída calma pela porta do motorista: usa a animação, se houver
+            var act = Model.Rigged && !v.TwoWheeler ? CarActions.Exit : null;
+            if (animate && !bail && !leftBlocked && act != null && !v.Destroyed && !v.Sunk && vel.magnitude < 2f && !IsDead)
+            {
+                StartCoroutine(ExitRoutine(v, act));
+                return;
+            }
+            if (leftBlocked) p = v.DoorPoint(false);
             transform.SetParent(null, true);
             Gen.SetLayerRecursive(gameObject, 2);
             v.SetPlayerDriver(false);
@@ -328,6 +441,14 @@ namespace DevCity
         void Die()
         {
             var gm = GameManager.I;
+            if (entering)
+            {
+                // morreu no meio de entrar/sair do carro: cancela a animação
+                StopAllCoroutines();
+                entering = false;
+                Model.SnapTo("Movimento");
+                Teleport(transform.position);
+            }
             if (Vehicle != null && !Vehicle.Destroyed) ExitVehicle(false);
             else if (Vehicle != null) { transform.SetParent(null, true); Gen.SetLayerRecursive(gameObject, 2); Vehicle = null; Model.Sitting = false; }
             Model.transform.localRotation = Quaternion.Euler(-88f, 0, 0);

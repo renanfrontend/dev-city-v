@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DevCity
 {
-    public enum VehicleKind { Sedan, Sports, SUV, Taxi, Van, Police, Swat, Armored, Ambulance }
+    public enum VehicleKind { Sedan, Sports, SUV, Taxi, Van, Police, Swat, Armored, Ambulance, Moto }
 
     /// <summary>"Cérebro" de quem dirige: trânsito, polícia, fuga de missão...</summary>
     public interface IVehicleBrain
@@ -42,6 +42,7 @@ namespace DevCity
         public bool Persistent;          // missão: não some sozinho
         public bool SirenOn;
         public bool IsAircraft => false;
+        public bool TwoWheeler => Kind == VehicleKind.Moto;   // moto: 2 rodas (índices 0 e 2) e estabilizador
         public bool ExplodesOnDeath = true;
         public float ModelScale = 1.4f;      // escala do modelo 3D (usada no tamanho dos destroços)
         public System.Action<VehicleController> OnDestroyed;
@@ -88,8 +89,9 @@ namespace DevCity
             Body = rb;
             Seat = seat;
             Health = spec.Health;
-            spring = spec.Mass * 10f;
-            damper = spec.Mass * 1.1f;
+            float perWheel = kind == VehicleKind.Moto ? 2f : 1f; // moto: 2 rodas seguram o peso que 4 seguravam
+            spring = spec.Mass * 10f * perWheel;
+            damper = spec.Mass * 1.1f * perWheel;
             compression = new float[4];
             grounded = new bool[4];
             All.Add(this);
@@ -205,9 +207,11 @@ namespace DevCity
             float brakeForce = braking ? Spec.Mass * 9f : 0f;
 
             int groundedCount = 0;
-            float quarterMass = Spec.Mass / 4f;
+            int wheels = TwoWheeler ? 2 : 4;
+            float quarterMass = Spec.Mass / wheels; // massa que cada roda "segura"
             for (int i = 0; i < 4; i++)
             {
+                if (TwoWheeler && (i == 1 || i == 3)) continue; // moto: só a roda 0 (frente) e a 2 (trás)
                 bool front = i < 2;
                 Vector3 mount = transform.TransformPoint(wheelLocal[i]);
                 float maxLen = suspRest + Spec.WheelRadius;
@@ -240,8 +244,8 @@ namespace DevCity
 
                 float longF = 0f;
                 bool driven = Spec.AWD || !front;
-                if (driven) longF += engineForce / (Spec.AWD ? 4f : 2f);
-                if (braking) longF -= Mathf.Sign(vLong) * Mathf.Min(brakeForce / 4f, Mathf.Abs(vLong) * quarterMass / dt);
+                if (driven) longF += engineForce / (TwoWheeler ? 1f : Spec.AWD ? 4f : 2f);
+                if (braking) longF -= Mathf.Sign(vLong) * Mathf.Min(brakeForce / wheels, Mathf.Abs(vLong) * quarterMass / dt);
                 if (handbrake && !front) longF -= Mathf.Sign(vLong) * Mathf.Min(Spec.Mass * 3f, Mathf.Abs(vLong) * quarterMass / dt * 0.5f);
                 longF -= vLong * 12f; // resistência de rolagem
 
@@ -259,8 +263,10 @@ namespace DevCity
                 }
             }
 
+            if (TwoWheeler) Balance(groundedCount, speed, fwdSpeed);
+
             // barra estabilizadora (menos capotamento)
-            for (int axle = 0; axle < 2; axle++)
+            for (int axle = 0; axle < 2 && !TwoWheeler; axle++)
             {
                 int l = axle * 2, r = axle * 2 + 1;
                 float diff = (compression[l] - compression[r]) * spring * 0.6f;
@@ -273,6 +279,33 @@ namespace DevCity
             Body.AddForce(-vel * speed * drag);
             if (groundedCount > 0) Body.AddForce(-transform.up * speed * speed * 1.5f);
             else Body.AddTorque(-Body.angularVelocity * Spec.Mass * 0.3f); // estabiliza no ar
+        }
+
+        /// <summary>
+        /// "Estabilizador" da moto (desafio 4). Com as 2 rodas no meio, nada impede a moto de tombar
+        /// para o lado; então um torque (Body.AddTorque) empurra a moto de volta para uma inclinação-alvo.
+        /// Parada, o alvo é ficar em pé; nas curvas, ela deita para dentro, como uma moto de verdade.
+        /// </summary>
+        void Balance(int groundedCount, float speed, float fwdSpeed)
+        {
+            if (Destroyed || Sunk) return;
+            // inclinação-alvo: mais curva e mais velocidade = deita mais (máx. ~40°)
+            float lean = -steerAngle * Mathf.Clamp01(Mathf.Abs(fwdSpeed) / 12f) * 1.6f;
+            lean = Mathf.Clamp(lean, -40f, 40f);
+            Vector3 fwd = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
+            Vector3 wantUp = Quaternion.AngleAxis(lean, fwd) * Vector3.up;
+
+            // quanto falta para chegar lá (eixo = frente da moto) e quanto ela já está girando nesse eixo
+            Vector3 axis = Vector3.Cross(transform.up, wantUp);
+            float err = Vector3.Dot(axis, transform.forward);           // ~seno do erro de inclinação
+            float rollVel = Vector3.Dot(Body.angularVelocity, transform.forward);
+            float strength = groundedCount > 0 ? 1f : 0.3f;              // no ar, só um pouco
+            float torque = (err * 60f - rollVel * 9f) * strength;        // mola + amortecedor
+            Body.AddTorque(transform.forward * torque, ForceMode.Acceleration);
+
+            // a moto também não deve "empinar" sozinha: segura o giro para trás/frente
+            float pitchVel = Vector3.Dot(Body.angularVelocity, transform.right);
+            Body.AddTorque(-transform.right * pitchVel * 3f * strength, ForceMode.Acceleration);
         }
 
         void Update()

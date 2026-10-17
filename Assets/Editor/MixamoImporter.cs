@@ -36,6 +36,8 @@ namespace DevCity.EditorTools
         // "Pistol Idle" tem que virar "mira", não "parado")
         static readonly (string role, string[] keys)[] Roles =
         {
+            ("entrar", new[] { "enter", "entrar" }),
+            ("sair", new[] { "exit", "sair" }),
             ("mira", new[] { "aim", "pistol", "rifle", "mira" }),
             ("sprint", new[] { "sprint", "fast run", "fastrun", "fast_run" }),
             ("maos", new[] { "hands", "surrender", "maos" }),
@@ -46,6 +48,9 @@ namespace DevCity.EditorTools
             ("correr", new[] { "run", "correr" }),
             ("parado", new[] { "idle", "parado" }),
         };
+
+        // animações que tocam uma vez só (sem loop)
+        static readonly string[] OneShot = { "soco", "entrar", "sair" };
 
         [UnityEditor.MenuItem("Dev City/Preparar personagens Mixamo", false, 1)]
         public static void Run()
@@ -73,7 +78,7 @@ namespace DevCity.EditorTools
                 string file = Path.GetFileNameWithoutExtension(path);
                 string role = RoleOf(file);
                 if (role == null) { Debug.LogWarning($"[Mixamo] Não sei para que serve \"{file}\". Renomeie (ex.: Idle, Walking, Running, Sprint, Aim, HandsUp, Sitting, Cower, Punch)."); continue; }
-                ConfigureAnimation(path, role != "soco");
+                ConfigureAnimation(path, !OneShot.Contains(role));
                 var clip = AssetDatabase.LoadAllAssetsAtPath(path).OfType<AnimationClip>().FirstOrDefault(c => !c.name.StartsWith("__preview__"));
                 if (clip != null) { clips[role] = clip; Debug.Log($"[Mixamo] Animação \"{file}\" → {role}"); }
             }
@@ -82,6 +87,7 @@ namespace DevCity.EditorTools
 
             // 3) Animator Controller
             var controller = BuildController(clips);
+            SaveCarActions(clips);
 
             // 4) prefabs
             foreach (var path in chars) MakePrefab(path, controller);
@@ -217,6 +223,11 @@ namespace DevCity.EditorTools
             BoolState(sm, "MaosParaCima", clips, "maos", "HandsUp", loco);
             BoolState(sm, "Encolhido", clips, "encolhido", "Cower", loco);
 
+            // entrar e sair do carro: o jogo chama anim.CrossFade("EntrandoNoCarro") direto
+            // (as da Mixamo duram ~5,5 s; aceleramos para ~3,4 s, perto do tempo do GTA)
+            OneShotState(sm, "EntrandoNoCarro", clips, "entrar", loco, 1.6f);
+            OneShotState(sm, "SaindoDoCarro", clips, "sair", loco, 1.8f);
+
             // camada 1: só braços e tronco (mira e soco por cima do andar)
             var mask = new AvatarMask();
             foreach (AvatarMaskBodyPart part in System.Enum.GetValues(typeof(AvatarMaskBodyPart)))
@@ -271,6 +282,54 @@ namespace DevCity.EditorTools
             r.duration = 0.2f;
             r.hasExitTime = false;
         }
+
+        /// <summary>Estado tocado pelo código (CrossFade) que volta sozinho para o movimento no fim.</summary>
+        static void OneShotState(AnimatorStateMachine sm, string name, Dictionary<string, AnimationClip> clips, string role, AnimatorState back, float speed)
+        {
+            if (!clips.TryGetValue(role, out var clip)) return;
+            var st = sm.AddState(name);
+            st.motion = clip;
+            st.speed = speed;
+            var r = st.AddTransition(back);
+            r.hasExitTime = true;
+            r.exitTime = 0.98f;
+            r.duration = 0.1f;
+        }
+
+        /// <summary>
+        /// Mede quanto o corpo anda e gira nas animações de entrar/sair do carro e grava em
+        /// Resources/Personagens/AcoesCarro.json. O jogo usa isso para posicionar o personagem
+        /// na porta de um jeito que, no fim da animação, ele caia certinho no banco.
+        /// </summary>
+        static void SaveCarActions(Dictionary<string, AnimationClip> clips)
+        {
+            var parts = new List<string>();
+            foreach (var role in new[] { "entrar", "sair" })
+            {
+                if (!clips.TryGetValue(role, out var clip)) continue;
+                var bindings = AnimationUtility.GetCurveBindings(clip);
+                float Curve(string prop, float t)
+                {
+                    foreach (var b in bindings)
+                        if (b.propertyName == prop) return AnimationUtility.GetEditorCurve(clip, b).Evaluate(t);
+                    return 0f;
+                }
+                Vector3 T(float t) => new Vector3(Curve("RootT.x", t), Curve("RootT.y", t), Curve("RootT.z", t));
+                Quaternion Q(float t) => new Quaternion(Curve("RootQ.x", t), Curve("RootQ.y", t), Curve("RootQ.z", t), Curve("RootQ.w", t));
+                float len = clip.length;
+                Vector3 t0 = T(0), t1 = T(len);
+                float yaw0 = Q(0).eulerAngles.y, yaw1 = Q(len).eulerAngles.y;
+                var a = new CarAction { dx = t1.x - t0.x, dz = t1.z - t0.z, y0 = t0.y, y1 = t1.y, yaw0 = yaw0, yaw1 = yaw1, len = len };
+                parts.Add($"\"{role}\":{JsonUtility.ToJson(a)}");
+                Debug.Log(System.FormattableString.Invariant(
+                    $"[Mixamo] {role}: corpo anda ({a.dx:0.00}, {a.dz:0.00}), altura {a.y0:0.00}→{a.y1:0.00}, gira {yaw0:0}°→{yaw1:0}°, {len:0.0} s"));
+            }
+            File.WriteAllText(OutDir + "/AcoesCarro.json", "{" + string.Join(",", parts) + "}");
+            AssetDatabase.ImportAsset(OutDir + "/AcoesCarro.json");
+        }
+
+        [System.Serializable]
+        class CarAction { public float dx, dz, y0, y1, yaw0, yaw1, len; }
 
         static void MakePrefab(string path, AnimatorController controller)
         {

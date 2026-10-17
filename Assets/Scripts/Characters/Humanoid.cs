@@ -211,6 +211,38 @@ namespace DevCity
             Muzzle = Pivot("Cano", mount, new Vector3(0.02f, 0.03f, 0.5f));
         }
 
+        // ===== ações tocadas pelo código (entrar e sair do carro) =====
+
+        /// <summary>Toca um estado do Animator (ex.: "EntrandoNoCarro"). False se o modelo não tem essa animação.</summary>
+        public bool PlayAction(string state, float fade = 0.15f)
+        {
+            if (!Rigged || !anim.HasState(0, Animator.StringToHash(state))) return false;
+            anim.CrossFadeInFixedTime(state, fade, 0, 0f);
+            return true;
+        }
+
+        /// <summary>Progresso da ação (0 a 1) ou -1 se ela não está tocando.</summary>
+        public float ActionProgress(string state)
+        {
+            if (!Rigged) return -1f;
+            if (anim.IsInTransition(0) && anim.GetNextAnimatorStateInfo(0).IsName(state)) return 0f;
+            var info = anim.GetCurrentAnimatorStateInfo(0);
+            return info.IsName(state) ? info.normalizedTime : -1f;
+        }
+
+        /// <summary>Corta direto para outro estado, sem mistura (usado quando o jogador é reposicionado).</summary>
+        public void SnapTo(string state)
+        {
+            if (!Rigged) return;
+            anim.Play(state, 0, 0f);
+            anim.Update(0f); // aplica a pose já neste quadro (sem "piscar")
+        }
+
+        public Transform Hips => Rigged ? anim.GetBoneTransform(HumanBodyBones.Hips) : hips;
+
+        /// <summary>Escala das medidas "humanas" das animações para metros neste modelo.</summary>
+        public float BodyScale => Rigged ? anim.humanScale * anim.transform.lossyScale.y : 1f;
+
         void RiggedUpdate()
         {
             gunShort.gameObject.SetActive(WeaponModel == 1);

@@ -17,6 +17,7 @@ namespace DevCity
             { VehicleKind.Police,  new VehicleSpec { Name = "Viatura DCPD",    Length = 4.8f, Width = 1.95f, Height = 1.5f,  WheelRadius = 0.37f, Mass = 1650f, Engine = 15500f, MaxSpeed = 57f, Grip = 1.7f } },
             { VehicleKind.Swat,    new VehicleSpec { Name = "Blindado SWAT",   Length = 5.6f, Width = 2.3f,  Height = 2.4f,  WheelRadius = 0.48f, Mass = 3200f, Engine = 21000f, MaxSpeed = 46f, Grip = 1.5f, AWD = true, Health = 2200f } },
             { VehicleKind.Armored, new VehicleSpec { Name = "Carro-Forte",     Length = 6.4f, Width = 2.5f,  Height = 2.8f,  WheelRadius = 0.55f, Mass = 6500f, Engine = 30000f, MaxSpeed = 34f, Grip = 1.4f, Health = 3500f } },
+            { VehicleKind.Moto,    new VehicleSpec { Name = "Raio 600",        Length = 2.1f, Width = 0.8f,  Height = 1.2f,  WheelRadius = 0.32f, Mass = 230f,  Engine = 3400f,  MaxSpeed = 58f, Grip = 1.6f, Health = 500f } },
             { VehicleKind.Ambulance, new VehicleSpec { Name = "Ambulância",    Length = 5.4f, Width = 2.1f,  Height = 2.5f,  WheelRadius = 0.42f, Mass = 2700f, Engine = 15000f, MaxSpeed = 42f, Grip = 1.4f, Health = 1400f } },
         };
 
@@ -36,7 +37,8 @@ namespace DevCity
             if (r < 0.55f) return VehicleKind.Sports;
             if (r < 0.75f) return VehicleKind.SUV;
             if (r < 0.86f) return VehicleKind.Taxi;
-            if (r < 0.96f) return VehicleKind.Van;
+            if (r < 0.93f) return VehicleKind.Van;
+            if (r < 0.97f) return VehicleKind.Moto;
             return VehicleKind.Ambulance;
         }
 
@@ -52,6 +54,9 @@ namespace DevCity
             rb.angularDamping = 0.6f;
             rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
             rb.interpolation = RigidbodyInterpolation.None;
+
+            // moto: 2 rodas e estabilizador (Vehicles/MotoBuilder.cs)
+            if (kind == VehicleKind.Moto) return MotoBuilder.Build(go, rb, spec, paint ?? RandomPaint());
 
             // modelo 3D de verdade (ex.: Kenney Car Kit) em Resources/Veiculos/<nome>; senão, caixas
             var model = Resources.Load<GameObject>("Veiculos/" + ModelName(kind));
@@ -217,6 +222,7 @@ namespace DevCity
                 case VehicleKind.Swat: return "truck";
                 case VehicleKind.Armored: return "delivery";
                 case VehicleKind.Ambulance: return "ambulance";
+                case VehicleKind.Moto: return "moto";
                 default: return "";
             }
         }
