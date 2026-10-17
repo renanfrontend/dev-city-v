@@ -191,6 +191,33 @@ namespace DevCity
             Log($"troca: {before} -> {gm.Switch.Current.Name} | modelo Mixamo: {(gm.Player.Model.Rigged ? "sim" : "não (bonecos de blocos)")} | bairro: {gm.City.AreaName(gm.Player.Position)} | estado: {gm.State}");
             yield return Shot("8_jacob");
 
+            // tutorial dos veículos: cores variadas, ambulância e destroços
+            var pj = gm.Player;
+            var cores = new System.Collections.Generic.List<string>();
+            VehicleController alvo = null;
+            for (int i = 0; i < 4; i++)
+            {
+                Vector3 pos = pj.Position + pj.transform.forward * (8f + i * 6f) + pj.transform.right * 4f;
+                var c = VehicleFactory.Create(i % 2 == 0 ? VehicleKind.Sedan : VehicleKind.SUV, pos, pj.transform.rotation);
+                c.SetInput(0f, 0f, true);
+                var r = c.GetComponentsInChildren<Renderer>().FirstOrDefault(x => x.sharedMaterial != null && x.sharedMaterial.name.StartsWith("Lataria_"));
+                cores.Add(r != null ? r.sharedMaterial.name.Replace("Lataria_", "cor ") : "original");
+                if (i == 0) alvo = c;
+            }
+            Log("cores dos carros civis: " + string.Join(", ", cores));
+            var amb = VehicleFactory.Create(VehicleKind.Ambulance, pj.Position - pj.transform.forward * 8f + pj.transform.right * 4f, pj.transform.rotation);
+            amb.SetInput(0f, 0f, true);
+            Log($"ambulância: {(amb.transform.Find("Carroceria/" + VehicleFactory.ModelName(VehicleKind.Ambulance)) != null ? "modelo 3D" : "caixas")} | {amb.DisplayName}");
+            yield return new WaitForSecondsRealtime(1.5f);
+            yield return Shot("9_cores");
+            pj.Armor = PlayerController.MaxArmor; pj.Health = PlayerController.MaxHealth;
+            alvo.Explode();
+            yield return new WaitForSecondsRealtime(0.6f);
+            int destrocos = FindObjectsByType<Rigidbody>().Count(rb => rb.name == "Destroco");
+            Log($"explosão: {destrocos} destroços voando");
+            yield return Shot("10_destrocos");
+            yield return new WaitForSecondsRealtime(2f);
+
             if (gm.Player.IsDead) Log("AVISO: o jogador morreu durante o teste");
             Log($"FIM | erros {errors} | exceções {exceptions}" + (firstError != null ? "\nPrimeiro erro: " + firstError : ""));
             yield return new WaitForSecondsRealtime(1f);

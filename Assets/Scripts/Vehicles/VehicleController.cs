@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DevCity
 {
-    public enum VehicleKind { Sedan, Sports, SUV, Taxi, Van, Police, Swat, Armored }
+    public enum VehicleKind { Sedan, Sports, SUV, Taxi, Van, Police, Swat, Armored, Ambulance }
 
     /// <summary>"Cérebro" de quem dirige: trânsito, polícia, fuga de missão...</summary>
     public interface IVehicleBrain
@@ -43,6 +43,7 @@ namespace DevCity
         public bool SirenOn;
         public bool IsAircraft => false;
         public bool ExplodesOnDeath = true;
+        public float ModelScale = 1.4f;      // escala do modelo 3D (usada no tamanho dos destroços)
         public System.Action<VehicleController> OnDestroyed;
 
         // passageiros NPC
@@ -444,6 +445,7 @@ namespace DevCity
             Body.AddForce(Vector3.up * Spec.Mass * 7f + Random.insideUnitSphere * Spec.Mass * 2f, ForceMode.Impulse);
             Body.AddTorque(Random.insideUnitSphere * Spec.Mass * 2f, ForceMode.Impulse);
             if (bodyRenderers != null) foreach (var r in bodyRenderers) r.sharedMaterial = Mats.Wreck;
+            SpawnDebris();
             if (HasNpcDriver) { var p = EjectDriver(transform.position, lastDamageByPlayer, true); if (p != null) p.ReportDeath(lastDamageByPlayer); }
             if (PlayerDriving) gm.Player.TakeDamage(9999f, transform.position, Vector3.up, false);
             if (lastDamageByPlayer && (Kind == VehicleKind.Police || Kind == VehicleKind.Swat)) gm.Wanted.Commit(Crime.DestroyPoliceVehicle, transform.position);
@@ -451,5 +453,33 @@ namespace DevCity
         }
 
         public bool IsDead => Destroyed;
+
+        // ===================== destroços (desafio 2 do TUTORIAL-VEICULOS.md) =====================
+
+        static GameObject[] debrisPrefabs;
+
+        /// <summary>Peças do Car Kit (porta, para-choque, pneu...) voando com física na explosão.</summary>
+        void SpawnDebris()
+        {
+            if (debrisPrefabs == null) debrisPrefabs = Resources.LoadAll<GameObject>("Veiculos/Destrocos");
+            if (debrisPrefabs.Length == 0) return;
+            int n = Random.Range(5, 7);
+            for (int i = 0; i < n; i++)
+            {
+                var prefab = debrisPrefabs[Random.Range(0, debrisPrefabs.Length)];
+                Vector3 p = transform.position + Vector3.up * (Spec.Height * 0.6f) + Random.insideUnitSphere * 0.8f;
+                var piece = Instantiate(prefab, p, Random.rotation);
+                piece.name = "Destroco";
+                piece.transform.localScale *= ModelScale;
+                foreach (var r in piece.GetComponentsInChildren<Renderer>()) r.sharedMaterial = Mats.Wreck;
+                // colisor do tamanho da peça (BoxCollider se ajusta à malha sozinho)
+                foreach (var mf in piece.GetComponentsInChildren<MeshFilter>()) mf.gameObject.AddComponent<BoxCollider>();
+                var rb = piece.AddComponent<Rigidbody>();
+                rb.mass = 25f;
+                rb.linearVelocity = Body.linearVelocity * 0.5f + (Random.insideUnitSphere + Vector3.up * 1.6f) * Random.Range(5f, 11f);
+                rb.angularVelocity = Random.insideUnitSphere * 12f;
+                Destroy(piece, 25f);
+            }
+        }
     }
 }

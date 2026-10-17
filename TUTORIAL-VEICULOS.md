@@ -40,21 +40,22 @@ Fica na função `ModelName`, em `VehicleFactory.cs`:
 |---|---|
 | Sedã | `sedan.fbx` |
 | Esportivo (Fúria GT) | `sedan-sports.fbx` |
-| SUV | `suv.fbx` |
+| SUV | `suv-luxury.fbx` |
 | Táxi | `taxi.fbx` |
 | Van | `van.fbx` |
 | Viatura | `police.fbx` |
 | Blindado SWAT | `truck.fbx` |
 | Carro-forte | `delivery.fbx` |
+| Ambulância | `ambulance.fbx` |
 
-### Exercício 1: trocar um carro (sem programar quase nada)
+### Exercício 1: trocar um carro (sem programar quase nada) ✅ feito: os SUVs agora são o `suv-luxury`
 
 1. Baixe o Car Kit (link no topo) e abra a pasta `Models/FBX format`.
 2. Copie, por exemplo, `suv-luxury.fbx` para `Assets/Resources/Veiculos/`.
 3. Em `ModelName`, troque `case VehicleKind.SUV: return "suv";` por `return "suv-luxury";`.
 4. Gere o jogo (**Dev City → Gerar jogo para Windows**). Todos os SUVs da cidade agora são o modelo de luxo.
 
-### Exercício 2: um tipo novo (ambulância)
+### Exercício 2: um tipo novo (ambulância) ✅ feito: `VehicleKind.Ambulance`, com 4% de chance no trânsito
 
 1. Copie `ambulance.fbx` para `Assets/Resources/Veiculos/`.
 2. Em `VehicleController.cs`, adicione `Ambulance` no `enum VehicleKind`.
@@ -100,8 +101,14 @@ Fontes gratuitas boas: **Kenney** (CC0), **Quaternius** (CC0) e **Poly Pizza** (
 
 ## Parte 5 — Desafios
 
-1. **Cores variadas**: hoje todo sedã tem a cor da textura. Em `BuildFromModel`, crie uma cópia do material da carroceria (`new Material(...)`) e mude `color` por um tom aleatório só para carros civis.
-2. **Peças voando na explosão**: o Car Kit tem `debris-door.fbx`, `debris-bumper.fbx`, `debris-tire.fbx`... Em `VehicleController.Explode()`, crie 4 ou 5 dessas peças com `Rigidbody` e jogue para cima.
+1. **Cores variadas** ✅ feito em `Vehicles/CarPaint.cs`.
+   A ideia simples (multiplicar uma cor no material) **não funciona bem aqui**: os carros da Kenney já são coloridos, e verde × azul vira quase preto. O jeito que usamos:
+   - a textura `colormap.png` é uma **paleta** de colunas com degradê, e a lataria de cada carro usa uma coluna;
+   - o código lê as coordenadas de textura (UV) da malha `body` e acha a coluna **mais usada**, que é a da lataria;
+   - cria 10 cópias da paleta (uma por cor) trocando só essa coluna, mas mantendo o degradê de luz e sombra;
+   - cada carro civil sorteia uma das 10 versões.
+   Para o código conseguir ler a malha e a textura, elas precisam de **Read/Write**. Quem liga isso é `Assets/Editor/VehicleImportSettings.cs`, um **AssetPostprocessor**: código que roda sozinho toda vez que o Unity importa um arquivo daquela pasta.
+2. **Peças voando na explosão** ✅ feito em `VehicleController.SpawnDebris()`. As peças ficam em `Assets/Resources/Veiculos/Destrocos/`. Cada explosão solta de 5 a 6 peças queimadas, com `Rigidbody` e `BoxCollider`, que somem depois de 25 s. Experimente mudar a quantidade (`Random.Range(5, 7)`) e a força (`Random.Range(5f, 11f)`).
 3. **Animação de entrar no carro**: na Mixamo há **Entering Car** e **Exiting Car**. Junte com o tutorial de personagens e troque o "deslize" de `PlayerController.EnterRoutine` pela animação.
 4. **Moto**: o Kit não tem moto, mas há modelos CC0 na Quaternius. Comece com 2 rodas e um "estabilizador" que mantém a moto em pé (`Body.AddTorque`).
 

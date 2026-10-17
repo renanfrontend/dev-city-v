@@ -17,6 +17,7 @@ namespace DevCity
             { VehicleKind.Police,  new VehicleSpec { Name = "Viatura DCPD",    Length = 4.8f, Width = 1.95f, Height = 1.5f,  WheelRadius = 0.37f, Mass = 1650f, Engine = 15500f, MaxSpeed = 57f, Grip = 1.7f } },
             { VehicleKind.Swat,    new VehicleSpec { Name = "Blindado SWAT",   Length = 5.6f, Width = 2.3f,  Height = 2.4f,  WheelRadius = 0.48f, Mass = 3200f, Engine = 21000f, MaxSpeed = 46f, Grip = 1.5f, AWD = true, Health = 2200f } },
             { VehicleKind.Armored, new VehicleSpec { Name = "Carro-Forte",     Length = 6.4f, Width = 2.5f,  Height = 2.8f,  WheelRadius = 0.55f, Mass = 6500f, Engine = 30000f, MaxSpeed = 34f, Grip = 1.4f, Health = 3500f } },
+            { VehicleKind.Ambulance, new VehicleSpec { Name = "Ambulância",    Length = 5.4f, Width = 2.1f,  Height = 2.5f,  WheelRadius = 0.42f, Mass = 2700f, Engine = 15000f, MaxSpeed = 42f, Grip = 1.4f, Health = 1400f } },
         };
 
         static readonly Color[] paints =
@@ -34,8 +35,9 @@ namespace DevCity
             if (r < 0.42f) return VehicleKind.Sedan;
             if (r < 0.55f) return VehicleKind.Sports;
             if (r < 0.75f) return VehicleKind.SUV;
-            if (r < 0.88f) return VehicleKind.Taxi;
-            return VehicleKind.Van;
+            if (r < 0.86f) return VehicleKind.Taxi;
+            if (r < 0.96f) return VehicleKind.Van;
+            return VehicleKind.Ambulance;
         }
 
         public static VehicleController Create(VehicleKind kind, Vector3 pos, Quaternion rot, Color? paint = null)
@@ -208,12 +210,13 @@ namespace DevCity
             {
                 case VehicleKind.Sedan: return "sedan";
                 case VehicleKind.Sports: return "sedan-sports";
-                case VehicleKind.SUV: return "suv";
+                case VehicleKind.SUV: return "suv-luxury";
                 case VehicleKind.Taxi: return "taxi";
                 case VehicleKind.Van: return "van";
                 case VehicleKind.Police: return "police";
                 case VehicleKind.Swat: return "truck";
                 case VehicleKind.Armored: return "delivery";
+                case VehicleKind.Ambulance: return "ambulance";
                 default: return "";
             }
         }
@@ -361,6 +364,8 @@ namespace DevCity
             seat.SetParent(go.transform, false);
             seat.localPosition = new Vector3(-bBody.size.x * 0.22f, bottom + 0.05f, bBody.center.z + bBody.size.z * 0.05f);
 
+            CarPaint.Apply(kind, bodyRenderers); // desafio 1: cor aleatória nos carros civis
+            vc.ModelScale = inst.transform.localScale.x;
             vc.bodyRenderers = bodyRenderers.ToArray();
             vc.headRenderers = heads.ToArray();
             vc.tailRenderers = tails.ToArray();
