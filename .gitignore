@@ -25,3 +25,12 @@ build.log
 *.slnx
 .vscode/
 *.zip
+DevCityV-Windows/
+
+# arquivos da Mixamo (Adobe): nao redistribuir em repositorio publico
+Assets/Mixamo/**/*.fbx
+Assets/Mixamo/**/*.fbx.meta
+Assets/Mixamo/Personagens/Texturas_*
+Assets/Mixamo/Personagens/Texturas_*.meta
+Assets/Resources/Personagens/
+Assets/Resources/Personagens.meta

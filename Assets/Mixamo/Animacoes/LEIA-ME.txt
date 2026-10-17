@@ -1,0 +1,19 @@
+ANIMAÇÕES DA MIXAMO (sem pele)
+
+Coloque aqui as animações baixadas da Mixamo:
+  Formato: FBX for Unity (.fbx)
+  Pele:    Without Skin
+  Marque "In Place" nas animações de andar e correr.
+
+Nomes dos arquivos (a ferramenta descobre o uso de cada animação pelo nome):
+  Idle.fbx      parado
+  Walking.fbx   andar          (In Place)
+  Running.fbx   correr         (In Place)
+  Sprint.fbx    disparada      (In Place)
+  Aim.fbx       mirar com a pistola
+  HandsUp.fbx   mãos para cima
+  Sitting.fbx   sentado dirigindo
+  Cower.fbx     encolhido de medo
+  Punch.fbx     soco
+
+Depois, no Unity: menu Dev City > Preparar personagens Mixamo.

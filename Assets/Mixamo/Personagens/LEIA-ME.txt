@@ -1,0 +1,13 @@
+PERSONAGENS DA MIXAMO (com pele)
+
+Coloque aqui os personagens baixados da Mixamo (www.mixamo.com):
+  Formato: FBX for Unity (.fbx)
+  Pose:    T-pose
+  Pele:    With Skin
+
+Nomes dos arquivos:
+  Trevor.fbx  -> primeiro protagonista
+  Jacob.fbx   -> segundo protagonista
+
+Depois, no Unity: menu Dev City > Preparar personagens Mixamo.
+Passo a passo completo: TUTORIAL-PERSONAGENS.md, na raiz do projeto.

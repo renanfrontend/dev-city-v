@@ -143,6 +143,8 @@ namespace DevCity
         public int[] clip;
         public float armor;
         public Color shirt, pants;
+        public CharacterProfile[] profiles;   // Trevor e Jacob
+        public int active;
     }
 
     /// <summary>Salva em JSON ao lado do executável; lê saves antigos do PlayerPrefs.</summary>
@@ -154,6 +156,7 @@ namespace DevCity
         public static bool Save()
         {
             var gm = GameManager.I;
+            gm.Switch.StoreActive();
             var w = gm.Player.Weapons;
             var d = new SaveData
             {
@@ -167,6 +170,8 @@ namespace DevCity
                 armor = gm.Player.Armor,
                 shirt = gm.Player.Outfit.Shirt,
                 pants = gm.Player.Outfit.Pants,
+                profiles = gm.Switch.Profiles,
+                active = gm.Switch.Active,
             };
             try
             {
@@ -203,6 +208,13 @@ namespace DevCity
                 gm.Player.Armor = d.armor;
                 var o = gm.Player.Outfit;
                 if (d.shirt.a > 0f) { o.Shirt = d.shirt; o.Pants = d.pants; gm.Player.SetOutfit(o); }
+                // saves novos: dois protagonistas (os campos antigos acima valem para saves velhos)
+                if (d.profiles != null && d.profiles.Length == gm.Switch.Profiles.Length)
+                {
+                    gm.Switch.Profiles = d.profiles;
+                    gm.Switch.Active = Mathf.Clamp(d.active, 0, d.profiles.Length - 1);
+                    gm.Switch.LoadActive(gm.Switch.Active != 0);
+                }
                 gm.Missions.RefreshGivers();
             }
             catch (System.Exception e)

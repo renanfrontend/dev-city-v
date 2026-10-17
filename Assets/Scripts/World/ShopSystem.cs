@@ -30,7 +30,7 @@ namespace DevCity
         public void Init()
         {
             var city = GameManager.I.City;
-            foreach (var t in new[] { PlaceType.GunShop, PlaceType.Store, PlaceType.Clothes, PlaceType.Safehouse })
+            foreach (var t in new[] { PlaceType.GunShop, PlaceType.Store, PlaceType.Clothes, PlaceType.Safehouse, PlaceType.SafehouseJacob })
                 markers.Add(Marker.Corona(city.Places[t].Door, new Color(1f, 0.82f, 0.2f), 0.9f));
             markers.Add(Marker.Corona(city.Places[PlaceType.PaySpray].Inside + Vector3.up * 0.05f, new Color(0.3f, 0.6f, 1f), 3f));
             SpawnClerk();
@@ -63,7 +63,7 @@ namespace DevCity
                 if (Near(p, city.Places[PlaceType.GunShop].Door)) Prompt("Aperte <b>E</b> para entrar no <b>Arsenal Bala Perdida</b>.", OpenGunShop);
                 else if (Near(p, city.Places[PlaceType.Clothes].Door)) Prompt("Aperte <b>E</b> para entrar na <b>Moda Marginal</b>.", OpenClothes);
                 else if (Near(p, city.Places[PlaceType.Store].Door) && !robbing) Prompt("Aperte <b>E</b> para comprar no <b>Mercadinho 24h</b>.", OpenStore);
-                else if (Near(p, city.Places[PlaceType.Safehouse].Door)) Prompt("Aperte <b>E</b> para entrar em <b>casa</b> (salvar / dormir).", OpenSafehouse);
+                else if (Near(p, city.Places[PlaceType.Safehouse].Door) || Near(p, city.Places[PlaceType.SafehouseJacob].Door)) Prompt("Aperte <b>E</b> para entrar em <b>casa</b> (salvar / dormir).", OpenSafehouse);
             }
 
             // ----- Pinta & Foge -----

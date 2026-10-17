@@ -58,8 +58,12 @@ namespace DevCity
     }
 
     /// <summary>
-    /// Boneco montado com peças e animado por código (andar, correr, mirar, mãos para cima,
-    /// sentado no carro, encolhido de medo). Origem nos pés, altura ~1,8 m, olhando para +Z.
+    /// Personagem do jogo. Tem dois modos:
+    /// 1) Modelo da Mixamo (ou outro humanoide): se existir o prefab Resources/Personagens/&lt;nome&gt;,
+    ///    ele é usado com um Animator (parâmetros Speed, Aim, HandsUp, Sitting, Cower, Punch).
+    /// 2) Boneco de blocos animado por código (quando não há modelo).
+    /// Os dois modos usam os mesmos campos públicos, então o resto do jogo não muda.
+    /// Origem nos pés, altura ~1,8 m, olhando para +Z.
     /// </summary>
     public class Humanoid : MonoBehaviour
     {
@@ -74,6 +78,26 @@ namespace DevCity
         float phase, punchT;
 
         public Transform Muzzle { get; private set; }
+        public bool Rigged => anim != null;
+
+        // modo Mixamo
+        Animator anim;
+        Transform chest;
+        static readonly int pSpeed = Animator.StringToHash("Speed"), pAim = Animator.StringToHash("Aim"),
+            pHandsUp = Animator.StringToHash("HandsUp"), pSitting = Animator.StringToHash("Sitting"),
+            pCower = Animator.StringToHash("Cower"), pPunch = Animator.StringToHash("Punch");
+
+        /// <summary>Usa o modelo Resources/Personagens/&lt;modelName&gt; se existir; senão, o boneco de blocos.</summary>
+        public static Humanoid Create(Transform parent, Outfit o, string modelName)
+        {
+            var prefab = string.IsNullOrEmpty(modelName) ? null : Resources.Load<GameObject>("Personagens/" + modelName);
+            if (prefab == null) return Create(parent, o);
+            var root = new GameObject("Modelo");
+            root.transform.SetParent(parent, false);
+            var h = root.AddComponent<Humanoid>();
+            h.BuildRigged(prefab);
+            return h;
+        }
 
         public static Humanoid Create(Transform parent, Outfit o)
         {
@@ -154,8 +178,64 @@ namespace DevCity
             phase = Random.value * 10f;
         }
 
+        void BuildRigged(GameObject prefab)
+        {
+            var model = Instantiate(prefab, transform);
+            model.name = prefab.name;
+            model.transform.localPosition = Vector3.zero;
+            model.transform.localRotation = Quaternion.identity;
+            anim = model.GetComponentInChildren<Animator>();
+            anim.applyRootMotion = false;
+            anim.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+
+            // ajusta a altura para ~1,8 m (modelos da Mixamo às vezes vêm em outra escala)
+            var renderers = model.GetComponentsInChildren<Renderer>();
+            if (renderers.Length > 0)
+            {
+                var b = renderers[0].bounds;
+                foreach (var r in renderers) b.Encapsulate(r.bounds);
+                if (b.size.y > 0.1f) model.transform.localScale *= 1.8f / b.size.y;
+            }
+            foreach (var r in renderers) r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+
+            // arma presa no osso da mão direita
+            var hand = anim.GetBoneTransform(HumanBodyBones.RightHand);
+            chest = anim.GetBoneTransform(HumanBodyBones.Chest) ?? anim.GetBoneTransform(HumanBodyBones.Spine);
+            var gunParent = hand != null ? hand : transform;
+            var mount = Pivot("Arma", gunParent, Vector3.zero);
+            mount.localScale = new Vector3(1f / gunParent.lossyScale.x, 1f / gunParent.lossyScale.y, 1f / gunParent.lossyScale.z);
+            gunShort = Pivot("Pistola", mount, new Vector3(0.02f, 0.03f, 0.08f));
+            Gen.Cube(gunShort, new Vector3(0, 0, 0.06f), new Vector3(0.05f, 0.08f, 0.2f), Mats.Black);
+            gunLong = Pivot("Fuzil", mount, new Vector3(0.02f, 0.03f, 0.1f));
+            Gen.Cube(gunLong, new Vector3(0, 0, 0.25f), new Vector3(0.06f, 0.1f, 0.75f), Mats.Black);
+            Muzzle = Pivot("Cano", mount, new Vector3(0.02f, 0.03f, 0.5f));
+        }
+
+        void RiggedUpdate()
+        {
+            gunShort.gameObject.SetActive(WeaponModel == 1);
+            gunLong.gameObject.SetActive(WeaponModel == 2);
+            // a arma aponta para onde o personagem olha
+            gunShort.parent.rotation = transform.rotation;
+            anim.SetFloat(pSpeed, MoveSpeed, 0.1f, Time.deltaTime);
+            anim.SetBool(pAim, Aim && WeaponModel > 0);
+            anim.SetBool(pHandsUp, HandsUp || Phone);
+            anim.SetBool(pSitting, Sitting);
+            anim.SetBool(pCower, Cower);
+            if (Punching) { anim.SetTrigger(pPunch); Punching = false; }
+            transform.localScale = Sitting ? Vector3.one * 0.9f : Vector3.one;
+        }
+
+        void OnAnimatorAimPitch()
+        {
+            // inclina o peito para mirar para cima/baixo (depois que o Animator posicionou o corpo)
+            if (chest != null && Aim && WeaponModel > 0)
+                chest.Rotate(transform.right, -AimPitch * 0.6f, Space.World);
+        }
+
         public void SetOutfit(Outfit o)
         {
+            if (Rigged) return; // o modelo da Mixamo já tem a própria roupa (textura)
             foreach (var r in shirtR) r.sharedMaterial = Mats.Get(o.Shirt, 0.15f);
             foreach (var r in pantsR) r.sharedMaterial = Mats.Get(o.Pants, 0.15f);
             foreach (var r in skinR) r.sharedMaterial = Mats.Get(o.Skin, 0.3f);
@@ -163,10 +243,11 @@ namespace DevCity
             foreach (var r in shoesR) r.sharedMaterial = Mats.Get(o.Shoes, 0.4f);
         }
 
-        public void Punch() { punchT = 0.3f; }
+        public void Punch() { punchT = 0.3f; if (Rigged) Punching = true; }
 
         void LateUpdate()
         {
+            if (Rigged) { RiggedUpdate(); OnAnimatorAimPitch(); return; }
             float dt = Time.deltaTime;
             gunShort.gameObject.SetActive(WeaponModel == 1);
             gunLong.gameObject.SetActive(WeaponModel == 2);

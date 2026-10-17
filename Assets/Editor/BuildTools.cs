@@ -20,6 +20,8 @@ namespace DevCity.EditorTools
         {
             "Standard", "Skybox/Procedural", "Sprites/Default", "UI/Default", "Legacy Shaders/Particles/Alpha Blended"
         };
+
+        [UnityEditor.MenuItem("Dev City/Configurar projeto", false, 20)]
         public static void Setup()
         {
             // cena vazia: o jogo se monta sozinho (GameManager com RuntimeInitializeOnLoadMethod)
@@ -60,6 +62,8 @@ namespace DevCity.EditorTools
             AssetDatabase.SaveAssets();
             Debug.Log("[Dev City] Projeto configurado.");
         }
+
+        [UnityEditor.MenuItem("Dev City/Gerar jogo para Windows", false, 21)]
         public static void BuildWindows()
         {
             Setup();

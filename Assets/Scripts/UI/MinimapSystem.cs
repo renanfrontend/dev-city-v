@@ -99,7 +99,7 @@ namespace DevCity
                 "<b>$</b> Mercadinho 24h\n" +
                 "<b>R</b> Moda Marginal (roupas)\n" +
                 "<b>P</b> Pinta & Foge (some com as estrelas)\n" +
-                "<b>C</b> Sua casa (salvar)\n" +
+                "<b>C</b> Casa do Trevor   <b>J</b> Casa do Jacob\n" +
                 "<b>H</b> Hospital   <b>D</b> Delegacia\n" +
                 "<color=#ff4040>●</color><color=#4080ff>●</color> Polícia\n\n" +
                 "<b>Clique</b> para marcar um destino no GPS\n<b>Botão direito</b> apaga o destino\n<b>M / Esc</b> fecha o mapa";
@@ -215,7 +215,7 @@ namespace DevCity
             }
 
             // lugares fixos
-            foreach (var pt in new[] { PlaceType.GunShop, PlaceType.Store, PlaceType.Clothes, PlaceType.PaySpray, PlaceType.Safehouse, PlaceType.Hospital, PlaceType.Police })
+            foreach (var pt in new[] { PlaceType.GunShop, PlaceType.Store, PlaceType.Clothes, PlaceType.PaySpray, PlaceType.Safehouse, PlaceType.SafehouseJacob, PlaceType.Hospital, PlaceType.Police })
             {
                 var pl = city.Places[pt];
                 Blip(pl.Door, center, yaw, zoom, Sprites.Circle, pl.BlipColor * 0.9f, 20f, false, pl.Letter);
@@ -297,7 +297,7 @@ namespace DevCity
             foreach (var pl in city.Places.Values)
             {
                 if (pl.Type == PlaceType.Bar || pl.Type == PlaceType.GangPark || pl.Type == PlaceType.Garage || pl.Type == PlaceType.Race) continue;
-                if (pl.Type >= PlaceType.MissionD) continue;
+                if (pl.Type >= PlaceType.MissionD && pl.Type <= PlaceType.MissionP) continue;
                 B(pl.Door, pl.BlipColor * 0.9f, 26f, pl.Letter);
             }
             foreach (var pt in gm.Missions.ActiveGiverPlaces())

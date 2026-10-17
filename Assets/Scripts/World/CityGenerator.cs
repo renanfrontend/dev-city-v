@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DevCity
 {
-    public enum PlaceType { Safehouse, Hospital, Police, GunShop, Store, Clothes, PaySpray, Garage, Bar, GangPark, Race, MissionD, MissionN, MissionG, MissionP }
+    public enum PlaceType { Safehouse, Hospital, Police, GunShop, Store, Clothes, PaySpray, Garage, Bar, GangPark, Race, MissionD, MissionN, MissionG, MissionP, SafehouseJacob }
 
     public class Place
     {
@@ -252,6 +252,7 @@ namespace DevCity
         {
             void S(int x, int y, PlaceType t) => special[new Vector2Int(x, y)] = t;
             S(1, 7, PlaceType.Safehouse);
+            S(8, 3, PlaceType.SafehouseJacob);
             S(6, 1, PlaceType.Hospital);
             S(2, 4, PlaceType.Police);
             S(7, 4, PlaceType.GunShop);
@@ -557,6 +558,20 @@ namespace DevCity
                     Palm(lotC + new Vector3(8f, 0, -12f), rnd);
                     Palm(lotC + new Vector3(-14f, 0, -12f), rnd);
                     place.Inside = lotC + new Vector3(-6f, 0, -10f);
+                    break;
+
+                case PlaceType.SafehouseJacob:
+                    // casa do Jacob: sobrado no Porto Dev, com quadra de basquete na frente
+                    place.Name = "Casa do Jacob"; place.Letter = "J"; place.BlipColor = new Color(0.3f, 0.75f, 0.95f);
+                    lotConcrete.Flat(lotC + Vector3.up * 0.01f, s, s, 4f);
+                    Building(lotC + new Vector3(0, 0, 8f), new Vector3(16f, 9f, 12f), 3, rnd, false);
+                    roofs.Box(lotC + new Vector3(0, 9.6f, 8f), new Vector3(17f, 0.8f, 13f), 4f);
+                    marksW.Flat(lotC + new Vector3(0, 0.03f, -9f), 14f, 0.15f, 1f);
+                    marksW.Flat(lotC + new Vector3(0, 0.03f, -9f), 0.15f, 10f, 1f);
+                    poles.Box(lotC + new Vector3(0, 1.6f, -14.5f), new Vector3(0.15f, 3.2f, 0.15f), 4f);
+                    darkTrim.Box(lotC + new Vector3(0, 3.2f, -14.2f), new Vector3(1.8f, 1.1f, 0.1f), 4f);
+                    Tree(lotC + new Vector3(12f, 0, -12f), rnd);
+                    place.Inside = lotC + new Vector3(0, 0, -6f);
                     break;
 
                 case PlaceType.Hospital:

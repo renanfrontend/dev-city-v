@@ -14,6 +14,7 @@ namespace DevCity
         public float Pitch { get; private set; } = 12f;
         public float Distance { get; private set; } = 4f;
         public bool TitleMode;
+        public bool Override;   // outro sistema controla a câmera (ex.: câmera do céu na troca de personagem)
 
         PlayerController player;
         float shake, recoil, lastMouse, titleT, fov = 62f;
@@ -38,6 +39,15 @@ namespace DevCity
         }
 
         public void Shake(float amount) => shake = Mathf.Max(shake, amount);
+
+        /// <summary>Coloca a câmera atrás do jogador sem suavização (depois de um corte).</summary>
+        public void SnapTo(float yaw, float pitch)
+        {
+            Yaw = yaw;
+            Pitch = pitch;
+            smoothPivot = player.transform.position + Vector3.up * 1.6f;
+            Distance = 3.9f;
+        }
         public void Recoil(float deg) { recoil += deg; }
 
         /// <summary>Gira a câmera suavemente na direção de um ponto (mira assistida).</summary>
@@ -57,6 +67,7 @@ namespace DevCity
             float dt = Time.unscaledDeltaTime;
 
             if (TitleMode) { TitleFlyover(dt); return; }
+            if (Override) return;
 
             bool paused = gm.State == GameState.Paused || gm.State == GameState.Map || gm.State == GameState.Shop;
             var v = player.Vehicle;

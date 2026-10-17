@@ -29,6 +29,7 @@ namespace DevCity
         public ShopSystem Shops { get; private set; }
         public MissionSystem Missions { get; private set; }
         public Gps Gps { get; private set; }
+        public CharacterSwitch Switch { get; private set; }
 
         public bool Playing => State == GameState.Playing;
         public Vector3 PlayerPos => Player != null ? Player.Position : Vector3.zero;
@@ -101,6 +102,10 @@ namespace DevCity
             Missions.Init();
             Traffic.Init();
             Peds.Init();
+
+            // Trevor e Jacob (precisa do jogador e do HUD prontos)
+            Switch = Make<CharacterSwitch>("Protagonistas");
+            Switch.Init();
 
             SaveSystem.Load();
             Step("sistemas, jogador e interface");

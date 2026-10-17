@@ -65,6 +65,15 @@ namespace DevCity
             Model.SetOutfit(o);
         }
 
+        /// <summary>Troca o boneco (usado na troca de protagonista). Usa o modelo da Mixamo se existir.</summary>
+        public void SetCharacter(string modelName, Outfit o)
+        {
+            Outfit = o;
+            if (Model != null) Destroy(Model.gameObject);
+            Model = Humanoid.Create(transform, o, modelName);
+            Gen.SetLayerRecursive(Model.gameObject, 2);
+        }
+
         void Update()
         {
             var gm = GameManager.I;

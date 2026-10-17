@@ -37,9 +37,12 @@ Tudo é gerado por código (cidade, personagens, carros, sons e interface), ent�
 | E | interagir (lojas, casa) | buzina |
 | H / G | — | faróis / sirene (viatura) |
 | M | mapa (clique marca destino no GPS) | mapa |
+| Alt (segurar) | trocar entre Trevor e Jacob | trocar entre Trevor e Jacob |
 | Esc | pausa | pausa |
 
 ## O que tem no jogo
+
+- **Dois protagonistas, Trevor e Jacob**: cada um com dinheiro, armas, roupa e casa próprios. Segure **Alt** para trocar, com a câmera do céu do GTA V. Os modelos podem vir da Mixamo: veja o [TUTORIAL-PERSONAGENS.md](TUTORIAL-PERSONAGENS.md).
 
 - **Cidade aberta**: 10×10 quadras com centro de arranha-céus, prédios médios, bairro de casas com piscina, praças, praia e mar (dá para nadar), semáforos, postes, ciclo de dia e noite (1 minuto do jogo = 2 s, como no GTA V) com janelas acendendo à noite.
 - **Personagem em 3ª pessoa**: corre com estamina, pula, nada, leva dano de queda, vida de 200 que regenera até 50%, colete.

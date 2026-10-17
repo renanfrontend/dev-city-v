@@ -177,6 +177,19 @@ namespace DevCity
             gm.Minimap.ShowBigMap(false);
             gm.SetPlaying();
 
+            // troca de protagonista (Trevor -> Jacob) com a câmera do céu
+            gm.Wanted.Clear();
+            gm.Police.DespawnAll();
+            gm.DayNight.Hour = 12f;
+            string before = gm.Switch.Current.Name;
+            gm.Switch.SwitchTo(1);
+            yield return new WaitForSecondsRealtime(1.2f);
+            yield return Shot("7_ceu");
+            while (gm.Switch.Switching) yield return null;
+            yield return new WaitForSecondsRealtime(1.5f);
+            Log($"troca: {before} -> {gm.Switch.Current.Name} | modelo Mixamo: {(gm.Player.Model.Rigged ? "sim" : "não (bonecos de blocos)")} | bairro: {gm.City.AreaName(gm.Player.Position)} | estado: {gm.State}");
+            yield return Shot("8_jacob");
+
             if (gm.Player.IsDead) Log("AVISO: o jogador morreu durante o teste");
             Log($"FIM | erros {errors} | exceções {exceptions}" + (firstError != null ? "\nPrimeiro erro: " + firstError : ""));
             yield return new WaitForSecondsRealtime(1f);
