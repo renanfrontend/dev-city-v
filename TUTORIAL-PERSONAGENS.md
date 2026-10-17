@@ -39,13 +39,16 @@ O código (`Characters/Humanoid.cs`) só manda números para o Animator: `Speed`
 ### 2.2 Baixar os dois personagens
 
 1. Clique na aba **Characters**.
-2. Escolha um personagem para o **Trevor** (sugestão: homem mais velho, cara de durão, roupa simples) e clique nele.
+2. Escolha um personagem para o **Trevor**. No nosso jogo usamos o **Brian** (careca, camisa polo e jeans). Clique nele e confirme em **Use this character**.
 3. Clique em **Download** e use exatamente:
    - **Format:** `FBX for Unity(.fbx)`
    - **Pose:** `T-pose`
 4. Salve o arquivo como **`Trevor.fbx`** em:
    `C:\Projetos\DevCityV\Assets\Mixamo\Personagens\`
-5. Repita para o **Jacob** (sugestão: jovem de moletom/tênis) e salve como **`Jacob.fbx`** na mesma pasta.
+5. Repita para o **Jacob**. Usamos o **Josh** (jovem de blazer e jeans). Salve como **`Jacob.fbx`** na mesma pasta.
+
+> A Mixamo salva com nomes como `Ch01_nonPBR.fbx`: **renomeie** para `Trevor.fbx` / `Jacob.fbx`.
+> Se o Chrome perguntar onde salvar cada arquivo, você pode desligar isso em *Configurações → Downloads → Perguntar onde salvar cada arquivo*.
 
 > Quer usar um personagem seu (feito no Blender, por exemplo)? Use **Upload Character** na Mixamo: ela coloca o esqueleto sozinha (*auto-rigger*).
 
@@ -59,17 +62,22 @@ Com qualquer personagem selecionado, vá na aba **Animations**, procure cada ani
 
 Na tela da animação, marque **In Place** nas de andar e correr. Sem isso, o personagem "anda sozinho" para fora do lugar e escorrega.
 
-| Para quê | Procure na Mixamo | Salve como | In Place |
-|---|---|---|---|
-| Parado | `Idle` | `Idle.fbx` | — |
-| Andar | `Walking` | `Walking.fbx` | ✔ |
-| Correr | `Running` | `Running.fbx` | ✔ |
-| Disparada (Shift) | `Fast Run` | `Sprint.fbx` | ✔ |
-| Mirar | `Pistol Idle` | `Aim.fbx` | — |
-| Mãos para cima | `Surrender` | `HandsUp.fbx` | — |
-| Dirigindo | `Driving` ou `Sitting` | `Sitting.fbx` | — |
-| Com medo | `Terrified` | `Cower.fbx` | — |
-| Soco | `Punching` | `Punch.fbx` | — |
+| Para quê | Procure na Mixamo | Escolha a animação | Salve como | In Place |
+|---|---|---|---|---|
+| Parado | `idle` | **Idle** (*Standing Idle*) | `Idle.fbx` | — |
+| Andar | `walk` | **Standard Walk** | `Walking.fbx` | ✔ |
+| Correr | `running` | **Running** (*Running With Intention*) | `Running.fbx` | ✔ |
+| Disparada (Shift) | `running` | **Running** (*Running Forward Quickly*) | `Sprint.fbx` | ✔ |
+| Mirar | `pistol idle` | **Pistol Idle** (*Idle With Aimed Pistol*) | `Aim.fbx` | — |
+| Dirigindo | `driving` | **Driving** (*Male Driving A Car*) | `Sitting.fbx` | — |
+| Com medo | `terrified` | **Terrified** | `Cower.fbx` | — |
+| Soco | `punching` | **Punching** (*Cross Punch*) | `Punch.fbx` | — |
+
+> Na Mixamo várias animações têm o **mesmo título**; o que diferencia é a **descrição** embaixo do nome (entre parênteses na tabela).
+>
+> **Mãos para cima** não existe pronta na Mixamo. Ela é opcional: sem ela, o personagem só não levanta as mãos quando é preso.
+>
+> Na busca `driving` também aparecem **Entering Car** e **Exiting Car** (entrar e sair do carro). Elas são ótimas para um próximo desafio.
 
 Salve todas em: `C:\Projetos\DevCityV\Assets\Mixamo\Animacoes\`
 

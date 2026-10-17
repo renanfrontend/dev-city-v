@@ -116,12 +116,51 @@ namespace DevCity.EditorTools
             imp.materialImportMode = ModelImporterMaterialImportMode.ImportStandard;
             imp.materialLocation = ModelImporterMaterialLocation.InPrefab;
             imp.SaveAndReimport();
-            // a Mixamo coloca as texturas dentro do FBX: tira para uma pasta para os materiais acharem
-            string texDir = Path.Combine(CharDir, "Texturas_" + Path.GetFileNameWithoutExtension(path)).Replace('\\', '/');
-            if (!AssetDatabase.IsValidFolder(texDir) && imp.ExtractTextures(texDir))
+
+            // a Mixamo coloca as texturas DENTRO do FBX: tira para uma pasta do projeto
+            string name = Path.GetFileNameWithoutExtension(path);
+            string texDir = $"{CharDir}/Texturas_{name}";
+            if (!AssetDatabase.IsValidFolder(texDir) || AssetDatabase.FindAssets("t:Texture2D", new[] { texDir }).Length == 0)
             {
+                imp.ExtractTextures(texDir);
                 AssetDatabase.Refresh();
-                imp.SaveAndReimport();
+            }
+            var textures = AssetDatabase.FindAssets("t:Texture2D", new[] { texDir })
+                .Select(AssetDatabase.GUIDToAssetPath).ToList();
+
+            // texturas "_Normal" precisam ser marcadas como normal map
+            foreach (var t in textures.Where(t => t.ToLowerInvariant().Contains("normal")))
+            {
+                var ti = (TextureImporter)AssetImporter.GetAtPath(t);
+                if (ti.textureType != TextureImporterType.NormalMap) { ti.textureType = TextureImporterType.NormalMap; ti.SaveAndReimport(); }
+            }
+
+            // materiais como arquivos .mat ao lado do FBX (o Unity liga as texturas pelo nome)
+            imp.materialLocation = ModelImporterMaterialLocation.External;
+            imp.materialName = ModelImporterMaterialName.BasedOnMaterialName;
+            imp.materialSearch = ModelImporterMaterialSearch.Everywhere;
+            imp.SaveAndReimport();
+
+            // garantia: material ainda sem textura recebe a _Diffuse (a Mixamo numera 1001, 1002...)
+            var diffuse = textures.Where(t => t.ToLowerInvariant().Contains("diffuse")).OrderBy(t => t).ToList();
+            var normals = textures.Where(t => t.ToLowerInvariant().Contains("normal")).OrderBy(t => t).ToList();
+            var renderers = AssetDatabase.LoadAssetAtPath<GameObject>(path).GetComponentsInChildren<Renderer>(true);
+            var mats = renderers.SelectMany(r => r.sharedMaterials).Where(m => m != null).Distinct().ToList();
+            for (int i = 0; i < mats.Count; i++)
+            {
+                var m = mats[i];
+                string matPath = AssetDatabase.GetAssetPath(m);
+                if (m.mainTexture == null && diffuse.Count > 0 && !matPath.EndsWith(".fbx", System.StringComparison.OrdinalIgnoreCase))
+                {
+                    m.mainTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(diffuse[Mathf.Min(i, diffuse.Count - 1)]);
+                    if (normals.Count > 0)
+                    {
+                        m.SetTexture("_BumpMap", AssetDatabase.LoadAssetAtPath<Texture2D>(normals[Mathf.Min(i, normals.Count - 1)]));
+                        m.EnableKeyword("_NORMALMAP");
+                    }
+                    EditorUtility.SetDirty(m);
+                }
+                Debug.Log($"[Mixamo] {name}: material \"{m.name}\" → textura {(m.mainTexture != null ? m.mainTexture.name : "NENHUMA")}");
             }
         }
 

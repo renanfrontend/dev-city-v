@@ -34,3 +34,7 @@ Assets/Mixamo/Personagens/Texturas_*
 Assets/Mixamo/Personagens/Texturas_*.meta
 Assets/Resources/Personagens/
 Assets/Resources/Personagens.meta
+Assets/Mixamo/Personagens/Materials/
+Assets/Mixamo/Personagens/Materials.meta
+Assets/Mixamo/**/*.fbm/
+Assets/Mixamo/**/*.fbm.meta
