@@ -248,7 +248,37 @@ namespace DevCity
 
             // desafio 4: moto (2 rodas + estabilizador)
             if (!gm.City.RandomLanePoint(pj.Position, 10f, 80f, out var mLane, out var mFrom, out var mTo)) mLane = pj.Position + pj.transform.right * 6f;
-            var moto = VehicleFactory.Create(VehicleKind.Moto, mLane, Quaternion.LookRotation((CityGenerator.NodePos(mTo) - CityGenerator.NodePos(mFrom)).normalized));
+            Quaternion mRot = Quaternion.LookRotation((CityGenerator.NodePos(mTo) - CityGenerator.NodePos(mFrom)).normalized);
+
+            // vitrine: um de cada modelo lado a lado, fotografados de lado
+            var vitrine = new System.Collections.Generic.List<VehicleController>();
+            Vector3 vRight = mRot * Vector3.right;
+            for (int k = 0; k < MotoBuilder.ModelCount; k++)
+            {
+                MotoBuilder.NextModel = k;
+                var vm = VehicleFactory.Create(VehicleKind.Moto, mLane + vRight * (12f + k * 1.6f) + Vector3.up * 0.3f, mRot);
+                vm.SetInput(0f, 0f, true);
+                vitrine.Add(vm);
+            }
+            yield return new WaitForSecondsRealtime(1.5f);
+            foreach (var vm in vitrine)
+                Log($"moto {vm.DisplayName}: roda r={vm.Spec.WheelRadius:0.00} m | {vm.Spec.Length:0.0} m | em pé? up.y={vm.transform.up.y:0.00} | modelo 3D: {(vm.transform.Find("Carroceria/" ) != null && vm.transform.Find("Carroceria").childCount > 2 ? "sim" : "caixas")}");
+            if (vitrine.Count > 0)
+            {
+                var cam = gm.Cam;
+                cam.Override = true;
+                Vector3 mid = (vitrine[0].transform.position + vitrine[vitrine.Count - 1].transform.position) / 2f;
+                cam.transform.position = mid + (mRot * Vector3.forward) * 7.5f + Vector3.up * 1.6f;
+                cam.transform.rotation = Quaternion.LookRotation(mid + Vector3.up * 0.6f - cam.transform.position);
+                yield return Shot("11a_vitrine_frente");
+                cam.transform.position = vitrine[0].transform.position - vRight * 4.5f + Vector3.up * 1.4f + (mRot * Vector3.forward) * 1f;
+                cam.transform.rotation = Quaternion.LookRotation(vitrine[0].transform.position + Vector3.up * 0.6f - cam.transform.position);
+                yield return Shot("11b_vitrine_lado");
+                cam.Override = false;
+            }
+
+            MotoBuilder.NextModel = 2; // a esportiva (Raio 600)
+            var moto = VehicleFactory.Create(VehicleKind.Moto, mLane, mRot);
             pj.Teleport(moto.DoorPoint(true));
             yield return new WaitForSecondsRealtime(1f);
             Log($"moto parada: em pé? up.y={moto.transform.up.y:0.00} | altura {moto.transform.position.y - mLane.y:0.00} m");

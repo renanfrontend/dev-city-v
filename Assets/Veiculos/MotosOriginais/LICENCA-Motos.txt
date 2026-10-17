@@ -1,0 +1,20 @@
+Motos do Dev City V — origem e licença
+=====================================
+
+Todos os modelos foram baixados do Poly Pizza (https://poly.pizza) em 17/10/2026.
+Modificações feitas pelo Dev City V (Assets/Editor/MotoImporter.cs): rodas separadas da
+carroceria, modelo girado para a frente (+Z), posto no chão e redimensionado.
+
+Arquivo               Modelo original                   Autor             Licença       Link
+--------------------  --------------------------------  ----------------  ------------  ---------------------------------
+moto-esportiva.glb    "Motorcycle"                      Poly by Google    CC-BY 3.0     https://poly.pizza/m/dse64pqMKAR
+moto-chopper.glb      "Motorcycle"                      Poly by Google    CC-BY 3.0     https://poly.pizza/m/5_MTCnqfUTr
+moto-cafe.glb         "Motorcycle"                      Poly by Google    CC-BY 3.0     https://poly.pizza/m/cFvmALDjMKw
+moto-scooter.glb      "Vespa"                           Jasmine Roberts   CC-BY 3.0     https://poly.pizza/m/blGLclvvdEM
+moto-roxa.glb         "Cartoony Purple Motorcycle"      AliceCassie       CC0 1.0       https://poly.pizza/m/j20srJUjpB
+
+CC-BY 3.0: https://creativecommons.org/licenses/by/3.0/
+  Pode usar, modificar e publicar (até em jogo comercial), DESDE QUE dê crédito ao autor.
+  O crédito aparece na tela de título do jogo, no README.md e neste arquivo.
+CC0 1.0: https://creativecommons.org/publicdomain/zero/1.0/
+  Domínio público: não precisa de crédito (damos mesmo assim).

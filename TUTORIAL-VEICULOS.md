@@ -117,7 +117,7 @@ Fontes gratuitas boas: **Kenney** (CC0), **Quaternius** (CC0) e **Poly Pizza** (
    - Só a saída calma com **F** usa a animação. Pular do carro andando, carro destruído ou afundando e a troca de personagem saem na hora.
    - Experimente mudar a velocidade das animações em `MixamoImporter.BuildController` (os números `1.6f` e `1.8f`) e rodar **Dev City → Preparar personagens Mixamo** de novo.
 4. **Moto** ✅ feito: a **Raio 600** (`VehicleKind.Moto`), com 4% de chance no trânsito.
-   - O visual é montado com caixas e cilindros em `Vehicles/MotoBuilder.cs`. Ainda não há um modelo 3D CC0 de moto na Kenney nem na Quaternius.
+   - Agora são **5 motos 3D** do Poly Pizza (veja a Parte 6). Se não houver nenhum modelo preparado, `Vehicles/MotoBuilder.cs` monta uma moto de caixas e cilindros.
    - **2 rodas no meio:** a física é a mesma dos carros, só que usa as rodas 0 (frente) e 2 (trás). A suspensão é 2× mais dura, porque 2 rodas seguram o peso que 4 seguravam.
    - **O estabilizador:** com as rodas no meio, nada segura a moto de lado. `VehicleController.Balance()` calcula uma inclinação-alvo (em pé quando parada, deitada para dentro nas curvas, até 40°) e usa `Body.AddTorque` como uma **mola com amortecedor**: força proporcional ao erro (`err * 60`) menos a velocidade de giro (`rollVel * 9`). Sem o amortecedor a moto balança de um lado para o outro. Teste trocar o 9 por 1!
    - Se a moto tombar mesmo assim (`up.y < 0,4`), o piloto cai no chão.
@@ -125,4 +125,42 @@ Fontes gratuitas boas: **Kenney** (CC0), **Quaternius** (CC0) e **Poly Pizza** (
 
 ---
 
-**Crédito:** veículos do **Car Kit** por [Kenney](https://www.kenney.nl), licença CC0. A licença original está em `Assets/Resources/Veiculos/LICENCA-Kenney.txt`.
+## Parte 6 — Motos 3D de graça (arquivos .glb)
+
+| No jogo | Arquivo | Autor | Licença |
+|---|---|---|---|
+| Raio 600 (esportiva) | `moto-esportiva.glb` | Poly by Google | CC-BY 3.0 |
+| Café Racer 250 | `moto-cafe.glb` | Poly by Google | CC-BY 3.0 |
+| Lobo Chopper | `moto-chopper.glb` | Poly by Google | CC-BY 3.0 |
+| Roxinha | `moto-roxa.glb` | AliceCassie | CC0 |
+| Vespina 50 (scooter, a "Faggio") | `moto-scooter.glb` | Jasmine Roberts | CC-BY 3.0 |
+
+Todas vieram do [Poly Pizza](https://poly.pizza). Os links estão em `Assets/Veiculos/MotosOriginais/LICENCA-Motos.txt`. As CC-BY **exigem crédito**: ele aparece no rodapé da tela de título e no README.
+
+### O problema: a roda vem grudada
+
+Quase todo modelo grátis é **uma peça só**. Para a roda girar e a suspensão funcionar, ela precisa ser separada. Quem faz isso é a ferramenta **Dev City → Preparar motos (.glb)** (`Assets/Editor/MotoImporter.cs`):
+
+1. **Lê o .glb direto.** Um .glb é um JSON (a "receita": peças, materiais, cores) seguido de um bloco de bytes (as posições dos vértices). Não precisa instalar pacote nenhum.
+2. **Separa em "ilhas".** Triângulos que dividem um vértice ficam no mesmo grupo. Um pneu quase nunca encosta no garfo, então vira uma ilha própria.
+3. **Acha os pneus.** São ilhas **redondas** (altura ≈ comprimento), **finas** e **encostadas no chão**. Pega a da frente e a de trás.
+4. **Monta cada roda:** o pneu mais tudo que cabe dentro dele (aro, raios).
+5. **Descobre a frente.** O guidão é a parte mais larga lá em cima, então o lado dele é a frente. A moto é girada para +Z, posta no chão e ajustada para 2,15 m (1,75 m na scooter).
+6. **Acha o banco:** o ponto mais alto da carroceria um pouco atrás do meio.
+7. Salva o prefab em `Assets/Resources/Veiculos/Motos/` com as peças `Carroceria`, `wheel-front`, `wheel-back` e `Banco`.
+
+O jogo (`MotoBuilder.BuildFromModel`) lê o raio da roda, o entre-eixos e a altura do banco do próprio modelo. Nome, peso, motor e velocidade de cada moto ficam na tabela `Tuning` do `MotoBuilder.cs`.
+
+### Exercício 3: adicionar uma moto nova
+
+1. No [Poly Pizza](https://poly.pizza/search/motorcycle), abra uma moto e confira a **licença** (CC0 ou CC-BY).
+2. Baixe em **GLB** e salve em `Assets/Veiculos/MotosOriginais/` com um nome como `moto-minha.glb`.
+3. Rode **Dev City → Preparar motos (.glb)** e leia o Console:
+   - deu certo: `[Motos] moto-minha: ... rodas: frente r=0.31 m ...`;
+   - não deu: `não achei os 2 pneus separados`. Isso acontece quando o pneu está grudado em outra peça; escolha outro modelo ou separe a roda no Blender.
+4. Se quiser, dê nome e desempenho próprios na tabela `Tuning`.
+5. Se for CC-BY, ponha o crédito na tela de título (`HUD.BuildTitle`), no README e no `LICENCA-Motos.txt`.
+
+---
+
+**Crédito:** veículos do **Car Kit** por [Kenney](https://www.kenney.nl), licença CC0. A licença original está em `Assets/Resources/Veiculos/LICENCA-Kenney.txt`. Motos: veja a Parte 6.

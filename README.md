@@ -4,7 +4,7 @@ Jogo de mundo aberto em 3D para Windows, feito em **Unity 6 + C#**, inspirado na
 Tudo é gerado por código (cidade, personagens, carros, sons e interface), então o projeto não depende de nenhum asset baixado.
 
 > Projeto de fã, sem fins comerciais. Nomes, marcas, armas e lugares são fictícios.
-> Veículos: Car Kit por [Kenney](https://www.kenney.nl) (CC0).
+> Veículos: Car Kit por [Kenney](https://www.kenney.nl) (CC0). Motos do [Poly Pizza](https://poly.pizza): "Motorcycle" por Poly by Google e "Vespa" por Jasmine Roberts (CC-BY 3.0), "Cartoony Purple Motorcycle" por AliceCassie (CC0). Detalhes em `Assets/Veiculos/MotosOriginais/LICENCA-Motos.txt`.
 
 ## Como abrir
 
@@ -48,7 +48,7 @@ Tudo é gerado por código (cidade, personagens, carros, sons e interface), ent�
 
 - **Cidade aberta**: 10×10 quadras com centro de arranha-céus, prédios médios, bairro de casas com piscina, praças, praia e mar (dá para nadar), semáforos, postes, ciclo de dia e noite (1 minuto do jogo = 2 s, como no GTA V) com janelas acendendo à noite.
 - **Personagem em 3ª pessoa**: corre com estamina, pula, nada, leva dano de queda, vida de 200 que regenera até 50%, colete.
-- **Veículos com física**: 9 carros (sedã, esportivo, SUV, táxi, van, viatura, blindado SWAT, carro-forte, ambulância) e a moto Raio 600 (2 rodas, deita nas curvas), suspensão, derrapagem no freio de mão, dano, fumaça, fogo, explosão com destroços, faróis, sirene. Entrar e sair com as animações da Mixamo, roubar com motorista dentro, pular do carro andando.
+- **Veículos com física**: 9 carros (sedã, esportivo, SUV, táxi, van, viatura, blindado SWAT, carro-forte, ambulância) e 5 motos (Raio 600, Café Racer 250, Lobo Chopper, Roxinha e a scooter Vespina 50; 2 rodas, deitam nas curvas), suspensão, derrapagem no freio de mão, dano, fumaça, fogo, explosão com destroços, faróis, sirene. Entrar e sair com as animações da Mixamo, roubar com motorista dentro, pular do carro andando.
 - **Cidade viva**: pedestres que andam pelas calçadas, atravessam na faixa, fogem de tiros, se encolhem, levantam as mãos, ligam para a polícia e deixam dinheiro cair; trânsito que respeita semáforo, buzina, desvia e foge.
 - **Nível de procurado (1–5★)**: polícia com cone de visão; estrelas piscam quando ela te perde de vista; some em 30/45/60/75/90 s; helicóptero com atirador, bloqueios e SWAT nos níveis altos; WASTED e BUSTED com hospital, delegacia e multas.
 - **Combate**: 7 armas fictícias, mira assistida, tiro na cabeça, granadas, soco, drive-by.
