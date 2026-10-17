@@ -16,6 +16,7 @@ namespace DevCity
         public string Name;
         public float Length, Width, Height, WheelRadius, Mass, Engine, MaxSpeed, Grip, Health = 1000f;
         public bool AWD;
+        public VehicleSpec Clone() => (VehicleSpec)MemberwiseClone();
     }
 
     /// <summary>

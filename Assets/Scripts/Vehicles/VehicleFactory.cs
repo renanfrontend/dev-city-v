@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace DevCity
@@ -49,6 +50,14 @@ namespace DevCity
             rb.angularDamping = 0.6f;
             rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
             rb.interpolation = RigidbodyInterpolation.None;
+
+            // modelo 3D de verdade (ex.: Kenney Car Kit) em Resources/Veiculos/<nome>; senão, caixas
+            var model = Resources.Load<GameObject>("Veiculos/" + ModelName(kind));
+            if (model != null)
+            {
+                var built = BuildFromModel(go, rb, kind, spec, model);
+                if (built != null) return built;
+            }
 
             float L = spec.Length, W = spec.Width, H = spec.Height, r = spec.WheelRadius;
             float clear = r * 0.7f;
@@ -183,6 +192,180 @@ namespace DevCity
             vc.headRenderers = heads.ToArray();
             vc.tailRenderers = tails.ToArray();
             vc.headLights = lights.ToArray();
+            vc.Setup(kind, spec, rb, seat);
+            return vc;
+        }
+
+        // ===================== modelos 3D (Kenney Car Kit ou outro) =====================
+
+        /// <summary>
+        /// Nome do arquivo em Assets/Resources/Veiculos para cada tipo de veículo.
+        /// Para trocar um carro, coloque outro FBX lá e mude o nome aqui.
+        /// </summary>
+        public static string ModelName(VehicleKind kind)
+        {
+            switch (kind)
+            {
+                case VehicleKind.Sedan: return "sedan";
+                case VehicleKind.Sports: return "sedan-sports";
+                case VehicleKind.SUV: return "suv";
+                case VehicleKind.Taxi: return "taxi";
+                case VehicleKind.Van: return "van";
+                case VehicleKind.Police: return "police";
+                case VehicleKind.Swat: return "truck";
+                case VehicleKind.Armored: return "delivery";
+                default: return "";
+            }
+        }
+
+        /// <summary>
+        /// Monta o carro a partir de um modelo com rodas separadas (nomes com "wheel", "front"/"back").
+        /// Mede o modelo, ajusta a escala para a largura do carro, coloca a frente para +Z,
+        /// liga cada roda na suspensão e cria colisor, faróis e giroflex.
+        /// </summary>
+        static VehicleController BuildFromModel(GameObject go, Rigidbody rb, VehicleKind kind, VehicleSpec baseSpec, GameObject prefab)
+        {
+            var spec = baseSpec.Clone();
+            var savedRot = go.transform.rotation;
+            go.transform.rotation = Quaternion.identity; // mede tudo com o carro "reto"
+            Vector3 origin = go.transform.position;
+
+            var body = new GameObject("Carroceria").transform;
+            body.SetParent(go.transform, false);
+            var inst = Object.Instantiate(prefab, body);
+            inst.name = prefab.name;
+            inst.transform.localPosition = Vector3.zero;
+            foreach (var c in inst.GetComponentsInChildren<Collider>(true)) Object.Destroy(c);
+
+            var wheels = inst.GetComponentsInChildren<Transform>(true)
+                .Where(t => t.name.ToLowerInvariant().Contains("wheel") && t.GetComponent<Renderer>() != null).ToList();
+            if (wheels.Count < 4)
+            {
+                Debug.LogWarning($"[Veículos] O modelo \"{prefab.name}\" não tem 4 rodas separadas (nomes com \"wheel\"). Usando o carro de caixas.");
+                Object.DestroyImmediate(body.gameObject);
+                go.transform.rotation = savedRot;
+                return null;
+            }
+
+            Bounds Measure(IEnumerable<Renderer> rs)
+            {
+                bool first = true;
+                var b = new Bounds();
+                foreach (var r in rs)
+                {
+                    var wb = r.bounds;
+                    var lb = new Bounds(wb.center - origin, wb.size);
+                    if (first) { b = lb; first = false; } else b.Encapsulate(lb);
+                }
+                return b;
+            }
+            bool IsFront(Transform t) => t.name.ToLowerInvariant().Contains("front");
+
+            // a frente do carro tem que olhar para +Z (como o resto do jogo espera)
+            float zFront = wheels.Where(IsFront).Average(w => w.GetComponent<Renderer>().bounds.center.z - origin.z);
+            float zBack = wheels.Where(w => !IsFront(w)).DefaultIfEmpty(wheels[0]).Average(w => w.GetComponent<Renderer>().bounds.center.z - origin.z);
+            if (zFront < zBack) inst.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+
+            // escala: um pouco mais largo que a tabela specs (os carros da Kenney são "gordinhos")
+            var all = inst.GetComponentsInChildren<Renderer>(true);
+            var bAll = Measure(all);
+            if (bAll.size.x > 0.01f) inst.transform.localScale *= spec.Width * 1.12f / bAll.size.x;
+            bAll = Measure(all);
+            inst.transform.localPosition += Vector3.up * -bAll.min.y; // rodas encostando no chão (y = 0)
+            bAll = Measure(all);
+
+            var bodyRenderers = all.Where(r => !wheels.Contains(r.transform)).ToList();
+            var bBody = Measure(bodyRenderers);
+            spec.Length = bAll.size.z;
+            spec.Height = bAll.size.y;
+            spec.Width = bAll.size.x;
+
+            // rodas: 0 dianteira esq., 1 dianteira dir., 2 traseira esq., 3 traseira dir.
+            var vc = go.AddComponent<VehicleController>();
+            vc.wheelLocal = new Vector3[4];
+            vc.wheelPivot = new Transform[4];
+            vc.wheelSpin = new Transform[4];
+            float radiusSum = 0f;
+            var used = new bool[4];
+            foreach (var w in wheels)
+            {
+                var wb = Measure(new[] { w.GetComponent<Renderer>() });
+                Vector3 c = wb.center;
+                bool front = c.z > bAll.center.z;
+                bool left = c.x < 0f;
+                int i = (front ? 0 : 2) + (left ? 0 : 1);
+                if (used[i]) continue; // modelos com rodas duplas (caminhão): fica a primeira de cada canto
+                used[i] = true;
+                float r = wb.extents.y;
+                radiusSum += r;
+                var pivot = new GameObject("Roda" + i).transform;
+                pivot.SetParent(go.transform, false);
+                pivot.localPosition = c;
+                var spin = new GameObject("Giro").transform;
+                spin.SetParent(pivot, false);
+                w.SetParent(spin, true);
+                vc.wheelPivot[i] = pivot;
+                vc.wheelSpin[i] = spin;
+                vc.wheelLocal[i] = new Vector3(c.x, c.y + 0.1f, c.z); // ponto de onde sai o raio da suspensão
+            }
+            if (used.Any(u => !u))
+            {
+                Debug.LogWarning($"[Veículos] Não achei as 4 rodas (frente/trás, esquerda/direita) em \"{prefab.name}\". Usando o carro de caixas.");
+                Object.Destroy(vc);
+                Object.DestroyImmediate(body.gameObject);
+                foreach (Transform t in go.transform) Object.DestroyImmediate(t.gameObject);
+                go.transform.rotation = savedRot;
+                return null;
+            }
+            spec.WheelRadius = radiusSum / 4f;
+
+            // colisor: a carroceria (desce um pouco para o raio da suspensão sair de dentro dele)
+            float mountY = vc.wheelLocal.Min(p => p.y);
+            float bottom = Mathf.Min(bBody.min.y, mountY - 0.05f);
+            var col = go.AddComponent<BoxCollider>();
+            col.center = new Vector3(bBody.center.x, (bottom + bBody.max.y) / 2f, bBody.center.z);
+            col.size = new Vector3(bBody.size.x, bBody.max.y - bottom, bBody.size.z);
+            col.sharedMaterial = new PhysicsMaterial("Lataria") { dynamicFriction = 0.25f, staticFriction = 0.3f, bounciness = 0.05f, frictionCombine = PhysicsMaterialCombine.Minimum };
+            rb.centerOfMass = new Vector3(0f, bottom + (bBody.max.y - bottom) * 0.3f, 0.05f);
+
+            // faróis e lanternas (acendem por cima das luzes desenhadas na textura)
+            var heads = new List<Renderer>();
+            var tails = new List<Renderer>();
+            float lightY = bBody.min.y + bBody.size.y * 0.35f;
+            for (int s = -1; s <= 1; s += 2)
+            {
+                heads.Add(Gen.Cube(body, new Vector3(s * bBody.size.x * 0.33f, lightY, bBody.max.z + 0.01f), new Vector3(bBody.size.x * 0.18f, 0.1f, 0.03f), Mats.HeadOff).GetComponent<Renderer>());
+                tails.Add(Gen.Cube(body, new Vector3(s * bBody.size.x * 0.35f, lightY, bBody.min.z - 0.01f), new Vector3(bBody.size.x * 0.16f, 0.1f, 0.03f), Mats.TailOff).GetComponent<Renderer>());
+            }
+            var lights = new List<Light>();
+            for (int s = -1; s <= 1; s += 2)
+            {
+                var lg = new GameObject("Farol");
+                lg.transform.SetParent(go.transform, false);
+                lg.transform.localPosition = new Vector3(s * bBody.size.x * 0.33f, lightY, bBody.max.z + 0.1f);
+                lg.transform.localRotation = Quaternion.Euler(8f, 0, 0);
+                var l = lg.AddComponent<Light>();
+                l.type = LightType.Spot; l.range = 35f; l.spotAngle = 60f; l.intensity = 2.2f;
+                l.color = new Color(1f, 0.95f, 0.85f);
+                l.enabled = false;
+                lights.Add(l);
+            }
+            if (kind == VehicleKind.Police || kind == VehicleKind.Swat)
+            {
+                float top = bAll.max.y + 0.06f;
+                vc.sirenA = Gen.Cube(body, new Vector3(-0.22f, top, bBody.center.z - 0.1f), new Vector3(0.4f, 0.12f, 0.22f), Mats.SirenOff).GetComponent<Renderer>();
+                vc.sirenB = Gen.Cube(body, new Vector3(0.22f, top, bBody.center.z - 0.1f), new Vector3(0.4f, 0.12f, 0.22f), Mats.SirenOff).GetComponent<Renderer>();
+            }
+
+            var seat = new GameObject("Banco").transform;
+            seat.SetParent(go.transform, false);
+            seat.localPosition = new Vector3(-bBody.size.x * 0.22f, bottom + 0.05f, bBody.center.z + bBody.size.z * 0.05f);
+
+            vc.bodyRenderers = bodyRenderers.ToArray();
+            vc.headRenderers = heads.ToArray();
+            vc.tailRenderers = tails.ToArray();
+            vc.headLights = lights.ToArray();
+            go.transform.rotation = savedRot;
             vc.Setup(kind, spec, rb, seat);
             return vc;
         }

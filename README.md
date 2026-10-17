@@ -4,6 +4,7 @@ Jogo de mundo aberto em 3D para Windows, feito em **Unity 6 + C#**, inspirado na
 Tudo é gerado por código (cidade, personagens, carros, sons e interface), então o projeto não depende de nenhum asset baixado.
 
 > Projeto de fã, sem fins comerciais. Nomes, marcas, armas e lugares são fictícios.
+> Veículos: Car Kit por [Kenney](https://www.kenney.nl) (CC0).
 
 ## Como abrir
 
@@ -43,6 +44,7 @@ Tudo é gerado por código (cidade, personagens, carros, sons e interface), ent�
 ## O que tem no jogo
 
 - **Dois protagonistas, Trevor e Jacob**: cada um com dinheiro, armas, roupa e casa próprios. Segure **Alt** para trocar, com a câmera do céu do GTA V. Os modelos podem vir da Mixamo: veja o [TUTORIAL-PERSONAGENS.md](TUTORIAL-PERSONAGENS.md).
+- **Carros 3D do Car Kit da Kenney** (CC0): sedã, esportivo, SUV, táxi, van, viatura, blindado e carro-forte, com rodas de verdade girando e esterçando. Veja o [TUTORIAL-VEICULOS.md](TUTORIAL-VEICULOS.md).
 
 - **Cidade aberta**: 10×10 quadras com centro de arranha-céus, prédios médios, bairro de casas com piscina, praças, praia e mar (dá para nadar), semáforos, postes, ciclo de dia e noite (1 minuto do jogo = 2 s, como no GTA V) com janelas acendendo à noite.
 - **Personagem em 3ª pessoa**: corre com estamina, pula, nada, leva dano de queda, vida de 200 que regenera até 50%, colete.

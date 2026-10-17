@@ -141,6 +141,7 @@ namespace DevCity
             p.ForceEnter(car);
             yield return new WaitForSecondsRealtime(1.2f);
             Log($"no carro: {(p.Vehicle == car ? "sim" : "NÃO")}");
+            Log($"carro {car.DisplayName}: {(car.transform.Find("Carroceria/" + VehicleFactory.ModelName(car.Kind)) != null ? "modelo 3D" : "caixas")} | {car.Spec.Length:0.0} x {car.Spec.Width:0.0} m | raio da roda {car.Spec.WheelRadius:0.00} m");
 
             // acelera reto e depois faz curva (com um piloto que freia/desvia de obstáculos à frente)
             StartCoroutine(KeepCarAlive(car));
