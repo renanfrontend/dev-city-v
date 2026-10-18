@@ -257,8 +257,9 @@ namespace DevCity
             press.text = "Pressione ENTER para jogar";
             press.gameObject.AddComponent<Blink>();
             // créditos dos modelos gratuitos (a licença CC-BY exige mostrar o autor)
-            var cred = Txt("Creditos", titleScreen.transform, C, C, new Vector2(0, -470), new Vector2(1800, 40), 18, TextAnchor.MiddleCenter, new Color(1, 1, 1, 0.65f));
-            cred.text = "Carros: Car Kit por Kenney (CC0)  ·  Motos (Poly Pizza): \"Motorcycle\" por Poly by Google e \"Vespa\" por Jasmine Roberts (CC-BY 3.0), \"Cartoony Purple Motorcycle\" por AliceCassie (CC0)  ·  Personagens: Mixamo";
+            var cred = Txt("Creditos", titleScreen.transform, C, C, new Vector2(0, -470), new Vector2(1800, 60), 18, TextAnchor.MiddleCenter, new Color(1, 1, 1, 0.65f));
+            cred.text = "Carros e cidade: Car Kit e City Kits por Kenney (CC0)  ·  Armas e NPCs: Quaternius (CC0; \"Suit\" e \"Worker\" CC-BY 3.0)  ·  Protagonistas: Mixamo\n" +
+                        "Motos (Poly Pizza): \"Motorcycle\" por Poly by Google e \"Vespa\" por Jasmine Roberts (CC-BY 3.0), \"Cartoony Purple Motorcycle\" por AliceCassie (CC0)";
         }
 
         public static string ControlsText()

@@ -81,6 +81,7 @@ namespace DevCity
             bool playing = gm.Playing;
             Weapons.Tick(playing && !entering && knockT <= 0f && !Swimming, Vehicle != null);
             Model.WeaponModel = Weapons.Def.Melee || Weapons.Def.Thrown || Swimming ? 0 : Weapons.Def.Model;
+            Model.WeaponFile = Weapons.Def.File;
             Model.Aim = Weapons.Aiming;
             Model.AimPitch = -gm.Cam.Pitch;
             if (!playing || entering) { if (Vehicle == null) Model.MoveSpeed = 0f; return; }

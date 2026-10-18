@@ -1,10 +1,11 @@
 # Dev City V
 
 Jogo de mundo aberto em 3D para Windows, feito em **Unity 6 + C#**, inspirado nas mecânicas de **Grand Theft Auto V**.
-Tudo é gerado por código (cidade, personagens, carros, sons e interface), então o projeto não depende de nenhum asset baixado.
+A lógica é toda em código (cidade, trânsito, polícia, missões, sons e interface). Os modelos 3D são gratuitos (Kenney e Quaternius, CC0/CC-BY) e já vêm no repositório; sem eles, o jogo volta para os modelos de caixas.
 
 > Projeto de fã, sem fins comerciais. Nomes, marcas, armas e lugares são fictícios.
 > Veículos: Car Kit por [Kenney](https://www.kenney.nl) (CC0). Motos do [Poly Pizza](https://poly.pizza): "Motorcycle" por Poly by Google e "Vespa" por Jasmine Roberts (CC-BY 3.0), "Cartoony Purple Motorcycle" por AliceCassie (CC0). Detalhes em `Assets/Veiculos/MotosOriginais/LICENCA-Motos.txt`.
+> Cidade: City Kits por Kenney (CC0). Armas e NPCs: Ultimate Guns Pack e Ultimate Modular Men/Women por [Quaternius](https://quaternius.com) (CC0; os modelos femininos "Suit" e "Worker" são CC-BY 3.0). Listas em `Assets/Resources/Cidade/LICENCA-Kenney.txt`, `Assets/Armas/Originais/LICENCA-Armas.txt` e `Assets/Resources/NPCs/LICENCA-NPCs.txt`.
 
 ## Como abrir
 
@@ -46,7 +47,8 @@ Tudo é gerado por código (cidade, personagens, carros, sons e interface), ent�
 - **Dois protagonistas, Trevor e Jacob**: cada um com dinheiro, armas, roupa e casa próprios. Segure **Alt** para trocar, com a câmera do céu do GTA V. Os modelos podem vir da Mixamo: veja o [TUTORIAL-PERSONAGENS.md](TUTORIAL-PERSONAGENS.md).
 - **Carros 3D do Car Kit da Kenney** (CC0): sedã, esportivo, SUV, táxi, van, viatura, blindado e carro-forte, com rodas de verdade girando e esterçando. Veja o [TUTORIAL-VEICULOS.md](TUTORIAL-VEICULOS.md).
 
-- **Cidade aberta**: 10×10 quadras com centro de arranha-céus, prédios médios, bairro de casas com piscina, praças, praia e mar (dá para nadar), semáforos, postes, ciclo de dia e noite (1 minuto do jogo = 2 s, como no GTA V) com janelas acendendo à noite.
+- **Cenário, armas e NPCs 3D**: prédios, casas, galpões e contêineres dos City Kits da Kenney; 5 armas 3D da Quaternius na mão dos personagens; 15 tipos de NPC animados (executivos, operários, punks, SWAT...). Veja o [TUTORIAL-MODELOS.md](TUTORIAL-MODELOS.md).
+- **Cidade aberta**: 10×10 quadras com centro de arranha-céus, prédios médios, bairro de casas com piscina, porto com contêineres, praças, praia e mar (dá para nadar), semáforos, postes, ciclo de dia e noite (1 minuto do jogo = 2 s, como no GTA V) com janelas acendendo à noite.
 - **Personagem em 3ª pessoa**: corre com estamina, pula, nada, leva dano de queda, vida de 200 que regenera até 50%, colete.
 - **Veículos com física**: 9 carros (sedã, esportivo, SUV, táxi, van, viatura, blindado SWAT, carro-forte, ambulância) e 5 motos (Raio 600, Café Racer 250, Lobo Chopper, Roxinha e a scooter Vespina 50; 2 rodas, deitam nas curvas), suspensão, derrapagem no freio de mão, dano, fumaça, fogo, explosão com destroços, faróis, sirene. Entrar e sair com as animações da Mixamo, roubar com motorista dentro, pular do carro andando.
 - **Cidade viva**: pedestres que andam pelas calçadas, atravessam na faixa, fogem de tiros, se encolhem, levantam as mãos, ligam para a polícia e deixam dinheiro cair; trânsito que respeita semáforo, buzina, desvia e foge.

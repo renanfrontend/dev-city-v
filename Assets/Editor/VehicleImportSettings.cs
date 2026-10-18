@@ -11,11 +11,14 @@ namespace DevCity.EditorTools
     public class VehicleImportSettings : AssetPostprocessor
     {
         const string Folder = "Assets/Resources/Veiculos";
+        const string CityFolder = "Assets/Resources/Cidade"; // modelos da cidade: legíveis para o static batching
 
         void OnPreprocessModel()
         {
-            if (!assetPath.StartsWith(Folder)) return;
+            if (!assetPath.StartsWith(Folder) && !assetPath.StartsWith(CityFolder)) return;
             var imp = (ModelImporter)assetImporter;
+            imp.importCameras = false;
+            imp.importLights = false;
             imp.isReadable = true;
         }
 
@@ -26,6 +29,6 @@ namespace DevCity.EditorTools
             imp.isReadable = true;
         }
 
-        public override uint GetVersion() => 1;
+        public override uint GetVersion() => 2;
     }
 }

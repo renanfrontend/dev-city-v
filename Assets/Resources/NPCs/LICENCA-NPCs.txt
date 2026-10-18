@@ -1,0 +1,27 @@
+NPCs do Dev City V — origem e licença
+====================================
+
+"Ultimate Modular Men Pack" e "Ultimate Modular Women Pack" por Quaternius (https://quaternius.com),
+baixados do Poly Pizza em 17/10/2026. Animações incluídas nos próprios arquivos.
+
+Arquivo                  Modelo original       Licença     Link
+-----------------------  --------------------  ----------  --------------------------------
+npc-executivo.glb        Business Man          CC0 1.0     https://poly.pizza/m/JFrLIKqvCH
+npc-casual.glb           Casual Character      CC0 1.0     https://poly.pizza/m/kZ3DmIoGip
+npc-praia.glb            Beach Character       CC0 1.0     https://poly.pizza/m/DojKLcO34E
+npc-moletom.glb          Hoodie Character      CC0 1.0     https://poly.pizza/m/gKLBoRsyKe
+npc-operario.glb         Worker                CC0 1.0     https://poly.pizza/m/Yg2bQZO6Hj
+npc-mochileiro.glb       Adventurer            CC0 1.0     https://poly.pizza/m/5EGWBMpuXq
+npc-fazendeiro.glb       Farmer                CC0 1.0     https://poly.pizza/m/7pn3R6hPvE
+npc-punk.glb             Punk                  CC0 1.0     https://poly.pizza/m/BTALZymknF
+npc-swat.glb             SWAT                  CC0 1.0     https://poly.pizza/m/Btfn3G5Xv4
+npc-mulher-vestido.glb   Animated Woman        CC0 1.0     https://poly.pizza/m/nIItLV9nxS
+npc-mulher-casual.glb    Animated Woman        CC0 1.0     https://poly.pizza/m/qJ2gsTUBHL
+npc-punk-mulher.glb      Punk                  CC0 1.0     https://poly.pizza/m/djXoqejw6w
+npc-aventureira.glb      Adventurer            CC0 1.0     https://poly.pizza/m/ZwF0K7WBmu
+npc-executiva.glb        Suit                  CC-BY 3.0   https://poly.pizza/m/sOUciDsoVV
+npc-operaria.glb         Worker                CC-BY 3.0   https://poly.pizza/m/E8079Ahx7k
+
+CC0 1.0: domínio público — https://creativecommons.org/publicdomain/zero/1.0/
+CC-BY 3.0: exige crédito ao autor (Quaternius) — https://creativecommons.org/licenses/by/3.0/
+  O crédito aparece na tela de título do jogo, no README.md e neste arquivo.

@@ -67,6 +67,7 @@ namespace DevCity
         {
             var o = Outfit.Random();
             o.Shirt = new Color(0.15f, 0.15f, 0.18f); o.Pants = new Color(0.15f, 0.15f, 0.18f); o.Style = 4; o.Cap = false;
+            o.Model = NpcModels.Pick(new[] { "npc-executivo", "npc-executiva" }); // de terno
             return o;
         }
 

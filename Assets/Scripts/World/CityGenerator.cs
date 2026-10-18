@@ -47,6 +47,8 @@ namespace DevCity
         MeshBuilder pools, roofs, poles, lampHeads, curbs, walkTops, lotGrass, lotConcrete, marksW, marksY, trunks, leaves, palms, sand, darkTrim;
         MeshBuilder[] tl;
         Transform colRoot;
+        Transform kitRoot;   // modelos 3D dos City Kits (juntados no fim com static batching)
+        bool kitCity;        // true se os modelos da Kenney estão no projeto
 
         // ===================== grafo de ruas =====================
 
@@ -212,6 +214,9 @@ namespace DevCity
             for (int i = 0; i < 6; i++) tl[i] = new MeshBuilder();
             colRoot = new GameObject("Colisores").transform;
             colRoot.SetParent(transform, false);
+            kitRoot = new GameObject("Modelos3D").transform;
+            kitRoot.SetParent(transform, false);
+            kitCity = KitModels.Has("Comercial") && KitModels.Has("Suburbio");
 
             DefineSpecialLots();
             BuildGround();
@@ -245,6 +250,7 @@ namespace DevCity
             pools.Create("Piscinas", transform, Mats.Pool, false);
             for (int i = 0; i < 6; i++) tl[i].Create("Semaforo_" + i, transform, Mats.TL[i], false);
 
+            if (kitRoot.childCount > 0) KitModels.CombineAll(kitRoot.gameObject);
             BuildMapTexture();
         }
 
@@ -427,6 +433,7 @@ namespace DevCity
 
         void BuildDowntown(float x, float z, float s, System.Random rnd)
         {
+            if (kitCity && DowntownKit(x, z, s, rnd)) return;
             int[] mats = { 0, 1, 9, 0, 2 };
             if (rnd.NextDouble() < 0.55)
             {
@@ -448,6 +455,7 @@ namespace DevCity
 
         void BuildMidrise(float x, float z, float s, System.Random rnd)
         {
+            if (kitCity && (IsPort(x, z) ? IndustrialKit(x, z, s, rnd) : MidriseKit(x, z, s, rnd))) return;
             int[] mats = { 2, 3, 4, 9, 5, 6 };
             lotConcrete.Flat(new Vector3(x + s / 2, CURB + 0.01f, z + s / 2), s, s, 4f);
             float half = (s - 2f) / 2f;
@@ -464,6 +472,7 @@ namespace DevCity
 
         void BuildHouses(float x, float z, float s, System.Random rnd)
         {
+            if (kitCity && (IsPort(x, z) ? IndustrialKit(x, z, s, rnd) : HousesKit(x, z, s, rnd))) return;
             lotGrass.Flat(new Vector3(x + s / 2, CURB + 0.01f, z + s / 2), s, s, 4f);
             float half = s / 2f;
             for (int i = 0; i < 2; i++)
@@ -512,6 +521,7 @@ namespace DevCity
 
         void Tree(Vector3 p, System.Random rnd)
         {
+            if (kitCity && TreeKit(p, rnd)) return;
             float h = 3f + (float)rnd.NextDouble() * 2f;
             trunks.Box(p + Vector3.up * h / 2f, new Vector3(0.4f, h, 0.4f), 4f);
             float r = 2.2f + (float)rnd.NextDouble() * 1.4f;
@@ -537,6 +547,179 @@ namespace DevCity
                 palms.Box(top + dir * 1.6f + Vector3.down * 0.35f, new Vector3(0.7f, 0.12f, 3.4f), 4f, a);
             }
             Gen.BoxCol(colRoot, p + Vector3.up * 1.5f, new Vector3(0.5f, 3f, 0.5f), "Palmeira");
+        }
+
+        // ===================== modelos 3D (City Kits da Kenney) =====================
+        // Cada função devolve false se faltar modelo; aí o gerador usa as caixas antigas.
+
+        static bool IsPort(float x, float z) => x / P > 7f && z / P < 4.5f; // o bairro "Porto Dev"
+
+        /// <summary>Ângulo para a frente do prédio olhar para a rua mais próxima do terreno.</summary>
+        static float FaceStreet(Vector3 c, float x, float z, float s)
+        {
+            float l = c.x - x, r = x + s - c.x, b = c.z - z, t = z + s - c.z;
+            float m = Mathf.Min(Mathf.Min(l, r), Mathf.Min(b, t));
+            return m == l ? 270f : m == r ? 90f : m == b ? 180f : 0f;
+        }
+
+        void KitCollider(Bounds b, string name) => Gen.BoxCol(colRoot, b.center, b.size, name);
+
+        bool DowntownKit(float x, float z, float s, System.Random rnd)
+        {
+            var towers = KitModels.Find("Comercial", "building-skyscraper");
+            var big = KitModels.Find("Comercial", "building-i", "building-j", "building-k", "building-l", "building-m", "building-n");
+            if (towers.Count == 0) return false;
+            var lot = new Vector3(x + s / 2, CURB, z + s / 2);
+            lotConcrete.Flat(lot + Vector3.up * 0.01f, s, s, 4f);
+            if (rnd.NextDouble() < 0.6)
+            {
+                // arranha-céu: 26 a 36 m de lado, até 130 m de altura
+                float w = 26f + (float)rnd.NextDouble() * 10f;
+                if (!KitModels.PlaceFitting(kitRoot, towers, rnd, lot, new Vector2(w, w), FaceStreet(lot, x, z, s), 16f, 26f, out var b, 130f)) return false;
+                KitCollider(b, "Predio");
+            }
+            else
+            {
+                // dois prédios comerciais grandes lado a lado
+                for (int i = 0; i < 2; i++)
+                {
+                    var c = new Vector3(x + s * (i == 0 ? 0.27f : 0.75f), CURB, z + s / 2);
+                    if (KitModels.PlaceFitting(kitRoot, big, rnd, c, new Vector2(s * 0.46f, s - 4f), FaceStreet(c, x, z, s), 12f, 18f, out var b))
+                        KitCollider(b, "Predio");
+                }
+            }
+            return true;
+        }
+
+        bool MidriseKit(float x, float z, float s, System.Random rnd)
+        {
+            var mids = KitModels.Find("Comercial", "building-a", "building-b", "building-c", "building-d", "building-e", "building-f",
+                                      "building-g", "building-h", "building-i", "building-j", "building-k", "building-l");
+            if (mids.Count == 0) return false;
+            lotConcrete.Flat(new Vector3(x + s / 2, CURB + 0.01f, z + s / 2), s, s, 4f);
+            float half = (s - 2f) / 2f;
+            for (int i = 0; i < 2; i++)
+                for (int j = 0; j < 2; j++)
+                {
+                    var c = new Vector3(x + 1f + half * (i + 0.5f), CURB, z + 1f + half * (j + 0.5f));
+                    if (rnd.NextDouble() < 0.15) { ParkingProps(c, half, rnd); continue; } // estacionamento vazio
+                    float face = FaceStreet(c, x, z, s);
+                    if (KitModels.PlaceFitting(kitRoot, mids, rnd, c, new Vector2(half - 1.5f, half - 1.5f), face, 10f, 16f, out var b))
+                    {
+                        KitCollider(b, "Predio");
+                        if (rnd.NextDouble() < 0.35) Awning(b, face, rnd); // toldo das lojinhas
+                    }
+                }
+            return true;
+        }
+
+        bool HousesKit(float x, float z, float s, System.Random rnd)
+        {
+            var houses = KitModels.Find("Suburbio", "building-type");
+            if (houses.Count == 0) return false;
+            lotGrass.Flat(new Vector3(x + s / 2, CURB + 0.01f, z + s / 2), s, s, 4f);
+            float half = s / 2f;
+            for (int i = 0; i < 2; i++)
+                for (int j = 0; j < 2; j++)
+                {
+                    var c = new Vector3(x + half * (i + 0.5f), CURB, z + half * (j + 0.5f));
+                    float face = FaceStreet(c, x, z, s);
+                    var dir = Quaternion.Euler(0, face, 0) * Vector3.forward;
+                    var side = Quaternion.Euler(0, face, 0) * Vector3.right;
+                    // a casa fica um pouco recuada da rua (jardim na frente)
+                    if (KitModels.PlaceFitting(kitRoot, houses, rnd, c - dir * 1.5f, new Vector2(half - 5f, half - 5f), face, 8f, 12f, out var b))
+                        KitCollider(b, "Casa");
+                    // piscina no quintal (é Dev City, né) e árvore no jardim
+                    if (rnd.NextDouble() < 0.3)
+                    {
+                        var pool = c - dir * (half / 2f - 1.2f) + side * (half / 2f - 3f);
+                        lotConcrete.Flat(pool + Vector3.up * 0.02f, 4.6f, 4.6f, 2f);
+                        pools.Flat(pool + Vector3.up * 0.03f, 3.8f, 3.8f, 2f);
+                    }
+                    if (rnd.NextDouble() < 0.7) TreeKit(c + dir * (half / 2f - 1.2f) - side * (half / 2f - 1.5f), rnd);
+                }
+            return true;
+        }
+
+        bool IndustrialKit(float x, float z, float s, System.Random rnd)
+        {
+            var sheds = KitModels.Find("Industrial", "building-");
+            var containers = KitModels.Find("Industrial", "shipping-container");
+            var extras = KitModels.Find("Industrial", "detail-tank-large", "water-tower", "chimney-large");
+            if (sheds.Count == 0) return false;
+            lotConcrete.Flat(new Vector3(x + s / 2, CURB + 0.01f, z + s / 2), s, s, 4f);
+            float half = (s - 2f) / 2f;
+            for (int i = 0; i < 2; i++)
+                for (int j = 0; j < 2; j++)
+                {
+                    var c = new Vector3(x + 1f + half * (i + 0.5f), CURB, z + 1f + half * (j + 0.5f));
+                    float face = FaceStreet(c, x, z, s);
+                    double r = rnd.NextDouble();
+                    if (r < 0.25 && containers.Count > 0)
+                    {
+                        // pátio de contêineres (pilhas de 1 ou 2)
+                        for (int k = 0; k < 3; k++)
+                        {
+                            var cc = c + new Vector3((k - 1) * 6.4f, 0f, 0f);
+                            int stack = 1 + rnd.Next(2);
+                            Bounds first = default;
+                            for (int h = 0; h < stack; h++)
+                            {
+                                var b = KitModels.Place(kitRoot, KitModels.Pick(containers, rnd), cc + Vector3.up * (h * 5.15f), new Vector2(5.6f, 13f), 0f);
+                                if (h == 0) first = b;
+                            }
+                            KitCollider(new Bounds(first.center + Vector3.up * (stack - 1) * first.size.y / 2f, new Vector3(first.size.x, first.size.y * stack, first.size.z)), "Conteiner");
+                        }
+                    }
+                    else if (r < 0.35 && extras.Count > 0)
+                    {
+                        if (KitModels.PlaceFitting(kitRoot, extras, rnd, c, new Vector2(half - 4f, half - 4f), face, 6f, 12f, out var b)) KitCollider(b, "Tanque");
+                    }
+                    else if (KitModels.PlaceFitting(kitRoot, sheds, rnd, c, new Vector2(half - 1.5f, half - 1.5f), face, 9f, 13f, out var b))
+                        KitCollider(b, "Galpao");
+                }
+            return true;
+        }
+
+        bool TreeKit(Vector3 p, System.Random rnd)
+        {
+            var trees = KitModels.Find("Suburbio", "tree-");
+            if (trees.Count == 0) return false;
+            float sc = 9f + (float)rnd.NextDouble() * 4f;
+            var m = KitModels.Pick(trees, rnd);
+            KitModels.Place(kitRoot, m, p, new Vector2(m.Bounds.size.x * sc, m.Bounds.size.z * sc), rnd.Next(4) * 90f);
+            Gen.BoxCol(colRoot, p + Vector3.up * 1.5f, new Vector3(0.6f, 3f, 0.6f), "Arvore");
+            return true;
+        }
+
+        /// <summary>Estacionamento vazio: caçamba de lixo e cones (do City Kit Roads).</summary>
+        void ParkingProps(Vector3 c, float size, System.Random rnd)
+        {
+            var dump = KitModels.Find("Ruas", "dumpster");
+            var cones = KitModels.Find("Ruas", "construction-cone", "construction-barrier");
+            if (dump.Count > 0)
+            {
+                var b = KitModels.Place(kitRoot, dump[0], c + new Vector3(size * 0.35f, 0f, size * 0.35f), new Vector2(2.4f, 2.4f), 90f * rnd.Next(4));
+                KitCollider(b, "Cacamba");
+            }
+            for (int k = 0; k < 4 && cones.Count > 0; k++)
+            {
+                var p = c + new Vector3(((float)rnd.NextDouble() - 0.5f) * size * 0.6f, 0f, ((float)rnd.NextDouble() - 0.5f) * size * 0.6f);
+                var m = KitModels.Pick(cones, rnd);
+                KitModels.Place(kitRoot, m, p, new Vector2(m.Bounds.size.x * 8f, m.Bounds.size.z * 8f), 90f * rnd.Next(4));
+            }
+        }
+
+        /// <summary>Toldo colorido na fachada, sobre a calçada interna do terreno.</summary>
+        void Awning(Bounds b, float face, System.Random rnd)
+        {
+            var aw = KitModels.Find("Comercial", "detail-awning");
+            if (aw.Count == 0) return;
+            var dir = Quaternion.Euler(0, face, 0) * Vector3.forward;
+            float depth = Mathf.Abs(dir.x) > 0.5f ? b.size.x : b.size.z;
+            var m = KitModels.Pick(aw, rnd);
+            var p = new Vector3(b.center.x, CURB + 3f, b.center.z) + dir * (depth / 2f + 0.4f);
+            KitModels.Place(kitRoot, m, p, new Vector2(m.Bounds.size.x * 10f, m.Bounds.size.z * 10f), face);
         }
 
         // ===================== lugares especiais =====================

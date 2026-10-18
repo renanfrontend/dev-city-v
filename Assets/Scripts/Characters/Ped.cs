@@ -89,6 +89,7 @@ namespace DevCity
             Model.Phone = State == PedState.Calling;
             Model.Aim = State == PedState.Fight && Weapon != null && !Weapon.Melee;
             Model.WeaponModel = (State == PedState.Fight || Role == PedRole.Cop && gm.Wanted.Stars > 0) && Weapon != null ? Weapon.Model : 0;
+            Model.WeaponFile = Weapon?.File;
 
             switch (State)
             {
@@ -379,6 +380,7 @@ namespace DevCity
             speed = 0f;
             Model.MoveSpeed = 0f;
             Model.HandsUp = Model.Cower = Model.Phone = Model.Aim = false;
+            Model.PlayDeath(); // NPC 3D: animação de morte
             if (knockT <= 0f) Knock(Vector3.up * 0.5f - transform.forward, true);
             Sfx.PlayAt(Sfx.Punch, transform.position, 0.4f, 0.7f);
             // dinheiro no chão, como no GTA V
@@ -434,6 +436,14 @@ namespace DevCity
             { p.x = transform.position.x; p.z = transform.position.z; kVel.x = kVel.z = 0f; }
             transform.position = p;
 
+            if (State == PedState.Dead && Model.DeathAnimated)
+            {
+                // a animação de morte já deita o corpo: não gira o modelo
+                Model.transform.localRotation = Quaternion.identity;
+                Model.transform.localPosition = Vector3.zero;
+                if (knockT <= 0f) knockT = 0f;
+                return;
+            }
             float fall = dieAfterKnock || knockT > 0.5f ? 88f : Mathf.Lerp(0f, 88f, knockT / 0.5f);
             Model.transform.localRotation = Quaternion.Slerp(Model.transform.localRotation, Quaternion.Euler(-fall, 0, 0), dt * 10f);
             Model.transform.localPosition = new Vector3(0, fall > 45f ? 0.2f : 0f, 0);

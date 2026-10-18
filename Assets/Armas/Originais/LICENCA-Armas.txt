@@ -1,0 +1,17 @@
+Armas do Dev City V — origem e licença
+======================================
+
+"Ultimate Guns Pack" por Quaternius (https://quaternius.com), baixado do Poly Pizza
+(https://poly.pizza/bundle/Ultimate-Guns-Pack-cpgUfI4t2F) em 17/10/2026.
+Licença: CC0 1.0 (domínio público) — https://creativecommons.org/publicdomain/zero/1.0/
+
+Arquivo                    Modelo original     Link
+-------------------------  ------------------  --------------------------------
+arma-pistola.glb           Pistol              https://poly.pizza/m/Jyn9qex4ba
+arma-submetralhadora.glb   Submachine Gun      https://poly.pizza/m/7ehatxr7FY
+arma-escopeta.glb          Shotgun Short Stock https://poly.pizza/m/MHv3uOV6ja
+arma-fuzil.glb             Assault Rifle       https://poly.pizza/m/Bgvuu4CUMV
+arma-sniper.glb            Sniper Rifle        https://poly.pizza/m/XCIC2Ae4Rb
+
+Modificações (Assets/Editor/WeaponImporter.cs): girado com o cano para a frente, tamanho real
+e origem no cabo.

@@ -62,6 +62,7 @@ namespace DevCity
                 QualitySettings.pixelLightCount = 2;
                 QualitySettings.shadowResolution = ShadowResolution.Medium;
                 QualitySettings.shadowCascades = 1;
+                QualitySettings.skinWeights = SkinWeights.TwoBones; // personagens: cada vértice segue só 2 ossos
                 Debug.Log("[Dev City] Qualidade reduzida para GPU fraca: " + SystemInfo.graphicsDeviceName);
             }
 

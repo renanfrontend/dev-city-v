@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DevCity
@@ -7,6 +8,7 @@ namespace DevCity
         public Color Skin, Hair, Shirt, Pants, Shoes;
         public int Style; // 0 civil, 1 policial, 2 SWAT, 3 gangue, 4 terno
         public bool Cap;
+        public string Model; // modelo 3D do NPC em Resources/NPCs (vazio = boneco de blocos)
 
         static readonly Color[] skins = { new Color(0.96f, 0.8f, 0.68f), new Color(0.85f, 0.65f, 0.5f), new Color(0.65f, 0.45f, 0.32f), new Color(0.45f, 0.3f, 0.2f), new Color(0.3f, 0.2f, 0.14f) };
         static readonly Color[] hairs = { new Color(0.1f, 0.07f, 0.05f), new Color(0.3f, 0.18f, 0.1f), new Color(0.75f, 0.6f, 0.35f), new Color(0.5f, 0.5f, 0.5f), new Color(0.05f, 0.05f, 0.05f) };
@@ -23,6 +25,7 @@ namespace DevCity
                 Pants = pants[UnityEngine.Random.Range(0, pants.Length)],
                 Shoes = UnityEngine.Random.value < 0.5f ? new Color(0.1f, 0.1f, 0.1f) : new Color(0.9f, 0.9f, 0.9f),
                 Cap = UnityEngine.Random.value < 0.2f,
+                Model = NpcModels.Pick(NpcModels.Civilians),
             };
         }
 
@@ -30,6 +33,7 @@ namespace DevCity
         {
             var o = Random();
             o.Shirt = new Color(0.12f, 0.17f, 0.32f); o.Pants = new Color(0.1f, 0.12f, 0.22f); o.Shoes = Color.black; o.Style = 1; o.Cap = true;
+            o.Model = NpcModels.Pick(NpcModels.Police);
             return o;
         }
 
@@ -37,6 +41,7 @@ namespace DevCity
         {
             var o = Random();
             o.Shirt = new Color(0.12f, 0.12f, 0.13f); o.Pants = new Color(0.12f, 0.12f, 0.13f); o.Shoes = Color.black; o.Style = 2; o.Cap = true;
+            o.Model = NpcModels.Pick(NpcModels.Police);
             return o;
         }
 
@@ -44,6 +49,7 @@ namespace DevCity
         {
             var o = Random();
             o.Shirt = new Color(0.55f, 0.1f, 0.6f); o.Pants = new Color(0.15f, 0.15f, 0.17f); o.Style = 3; o.Cap = UnityEngine.Random.value < 0.6f;
+            o.Model = NpcModels.Pick(NpcModels.Gang);
             return o;
         }
 
@@ -72,12 +78,16 @@ namespace DevCity
         public float AimPitch;       // graus (positivo = para cima)
         public bool HandsUp, Sitting, Cower, Phone, Punching;
         public int WeaponModel;      // 0 nada, 1 pistola, 2 arma longa
+        public string WeaponFile;    // modelo 3D da arma (Resources/Armas/<nome>); vazio = caixinhas
 
         Transform hips, torso, head, armL, armR, legL, legR, foreL, foreR, gunShort, gunLong;
         Renderer[] shirtR, pantsR, skinR, hairR, shoesR;
         float phase, punchT;
 
         public Transform Muzzle { get; private set; }
+        Transform weaponMount, fallbackMuzzle;
+        readonly Dictionary<string, Transform> weaponObjs = new Dictionary<string, Transform>();
+        string shownWeapon; // null = ainda não mostrou nada (a primeira chamada sempre ajusta)
         public bool Rigged => anim != null;
 
         // modo Mixamo
@@ -90,8 +100,9 @@ namespace DevCity
         /// <summary>Usa o modelo Resources/Personagens/&lt;modelName&gt; se existir; senão, o boneco de blocos.</summary>
         public static Humanoid Create(Transform parent, Outfit o, string modelName)
         {
-            var prefab = string.IsNullOrEmpty(modelName) ? null : Resources.Load<GameObject>("Personagens/" + modelName);
-            if (prefab == null) return Create(parent, o);
+            // "Trevor" → Resources/Personagens/Trevor; "NPCs/npc-punk" → Resources/NPCs/npc-punk
+            var prefab = string.IsNullOrEmpty(modelName) ? null : Resources.Load<GameObject>(modelName.Contains("/") ? modelName : "Personagens/" + modelName);
+            if (prefab == null) { o.Model = null; return Create(parent, o); }
             var root = new GameObject("Modelo");
             root.transform.SetParent(parent, false);
             var h = root.AddComponent<Humanoid>();
@@ -101,6 +112,7 @@ namespace DevCity
 
         public static Humanoid Create(Transform parent, Outfit o)
         {
+            if (!string.IsNullOrEmpty(o.Model)) return Create(parent, o, "NPCs/" + o.Model);
             var root = new GameObject("Modelo");
             root.transform.SetParent(parent, false);
             var h = root.AddComponent<Humanoid>();
@@ -168,7 +180,8 @@ namespace DevCity
             gunLong = Pivot("Fuzil", foreR, new Vector3(0, -0.32f, 0.1f));
             Gen.Cube(gunLong, new Vector3(0, 0, 0.25f), new Vector3(0.06f, 0.1f, 0.75f), Mats.Black);
             Gen.Cube(gunLong, new Vector3(0, -0.09f, 0.08f), new Vector3(0.05f, 0.14f, 0.07f), Mats.Black);
-            Muzzle = Pivot("Cano", foreR, new Vector3(0, -0.32f, 0.55f));
+            Muzzle = fallbackMuzzle = Pivot("Cano", foreR, new Vector3(0, -0.32f, 0.55f));
+            weaponMount = Pivot("ArmaModelo", foreR, new Vector3(0, -0.36f, 0.08f));
 
             shirtR = new[] { body.GetComponent<Renderer>(), aL.GetComponent<Renderer>(), aR.GetComponent<Renderer>() };
             pantsR = new[] { lL.GetComponent<Renderer>(), lR.GetComponent<Renderer>() };
@@ -185,8 +198,16 @@ namespace DevCity
             model.transform.localPosition = Vector3.zero;
             model.transform.localRotation = Quaternion.identity;
             anim = model.GetComponentInChildren<Animator>();
+            bool npc = anim == null || anim.runtimeAnimatorController == null;
+            if (npc)
+            {
+                // NPC importado pelo glTFast: o Animator vai na raiz (as animações apontam para os ossos a partir dela)
+                if (anim == null) anim = model.AddComponent<Animator>();
+                anim.runtimeAnimatorController = NpcModels.Controller;
+            }
             anim.applyRootMotion = false;
-            anim.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+            // o jogador anima sempre; NPC fora da tela não precisa mexer os ossos
+            anim.cullingMode = npc ? AnimatorCullingMode.CullUpdateTransforms : AnimatorCullingMode.AlwaysAnimate;
 
             // ajusta a altura para ~1,8 m (modelos da Mixamo às vezes vêm em outra escala)
             var renderers = model.GetComponentsInChildren<Renderer>();
@@ -197,10 +218,29 @@ namespace DevCity
                 if (b.size.y > 0.1f) model.transform.localScale *= 1.8f / b.size.y;
             }
             foreach (var r in renderers) r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+            if (npc)
+            {
+                NpcModels.SimplifyMaterials(renderers);
+                // NPC sem sombra: num boneco pequeno quase não aparece e custa o dobro de desenho
+                foreach (var r in renderers) r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                npcRenderers = renderers;
+            }
+            isNpc = npc;
+            animPhase = Random.Range(0, 4);
 
             // arma presa no osso da mão direita
-            var hand = anim.GetBoneTransform(HumanBodyBones.RightHand);
-            chest = anim.GetBoneTransform(HumanBodyBones.Chest) ?? anim.GetBoneTransform(HumanBodyBones.Spine);
+            Transform hand;
+            if (anim.isHuman)
+            {
+                hand = anim.GetBoneTransform(HumanBodyBones.RightHand);
+                chest = anim.GetBoneTransform(HumanBodyBones.Chest) ?? anim.GetBoneTransform(HumanBodyBones.Spine);
+            }
+            else
+            {
+                // esqueleto "genérico": acha os ossos pelo nome (padrão da Quaternius)
+                hand = FindBone(model.transform, "Wrist.R");
+                chest = FindBone(model.transform, "Chest");
+            }
             var gunParent = hand != null ? hand : transform;
             var mount = Pivot("Arma", gunParent, Vector3.zero);
             mount.localScale = new Vector3(1f / gunParent.lossyScale.x, 1f / gunParent.lossyScale.y, 1f / gunParent.lossyScale.z);
@@ -208,7 +248,24 @@ namespace DevCity
             Gen.Cube(gunShort, new Vector3(0, 0, 0.06f), new Vector3(0.05f, 0.08f, 0.2f), Mats.Black);
             gunLong = Pivot("Fuzil", mount, new Vector3(0.02f, 0.03f, 0.1f));
             Gen.Cube(gunLong, new Vector3(0, 0, 0.25f), new Vector3(0.06f, 0.1f, 0.75f), Mats.Black);
-            Muzzle = Pivot("Cano", mount, new Vector3(0.02f, 0.03f, 0.5f));
+            Muzzle = fallbackMuzzle = Pivot("Cano", mount, new Vector3(0.02f, 0.03f, 0.5f));
+            weaponMount = Pivot("ArmaModelo", mount, new Vector3(0.02f, 0f, 0.07f));
+        }
+
+        static Transform FindBone(Transform t, string name)
+        {
+            if (t.name == name) return t;
+            foreach (Transform c in t) { var r = FindBone(c, name); if (r != null) return r; }
+            return null;
+        }
+
+        /// <summary>Animação de morte (NPCs da Quaternius). True se tocou: aí o corpo não precisa "tombar" por código.</summary>
+        public bool DeathAnimated { get; private set; }
+        public bool PlayDeath()
+        {
+            if (DeathAnimated) return true;
+            DeathAnimated = PlayAction("Morte", 0.1f);
+            return DeathAnimated;
         }
 
         // ===== ações tocadas pelo código (entrar e sair do carro) =====
@@ -243,10 +300,34 @@ namespace DevCity
         /// <summary>Escala das medidas "humanas" das animações para metros neste modelo.</summary>
         public float BodyScale => Rigged ? anim.humanScale * anim.transform.lossyScale.y : 1f;
 
+        bool isNpc, npcHidden;
+        Renderer[] npcRenderers;
+        float animSkip;
+        int animPhase; // cada NPC atualiza num quadro diferente (sorteado no BuildRigged)
+
+        /// <summary>
+        /// NPC longe da câmera (mais de 30 m) atualiza a animação só 1 vez a cada 4 quadros —
+        /// ninguém percebe de longe, e a CPU fraca agradece.
+        /// </summary>
+        void ThrottleFarAnimation()
+        {
+            var cam = Camera.main;
+            float d2 = cam != null ? (cam.transform.position - transform.position).sqrMagnitude : 0f;
+            // muito longe (mais de 70 m): some (vira poucos pixels) e o Animator para sozinho (CullUpdateTransforms)
+            bool hide = d2 > 70f * 70f;
+            if (hide != npcHidden) { npcHidden = hide; foreach (var r in npcRenderers) if (r != null) r.enabled = !hide; }
+            if (hide) { if (anim.enabled) anim.enabled = false; return; } // escondido: nem anima
+            bool far = d2 > 30f * 30f;
+            if (!far) { if (!anim.enabled) anim.enabled = true; animSkip = 0f; return; }
+            if (anim.enabled) anim.enabled = false;
+            animSkip += Time.deltaTime;
+            if ((Time.frameCount + animPhase) % 4 == 0) { anim.Update(animSkip); animSkip = 0f; }
+        }
+
         void RiggedUpdate()
         {
-            gunShort.gameObject.SetActive(WeaponModel == 1);
-            gunLong.gameObject.SetActive(WeaponModel == 2);
+            if (isNpc) ThrottleFarAnimation();
+            ShowWeapon();
             // a arma aponta para onde o personagem olha
             gunShort.parent.rotation = transform.rotation;
             anim.SetFloat(pSpeed, MoveSpeed, 0.1f, Time.deltaTime);
@@ -256,6 +337,34 @@ namespace DevCity
             anim.SetBool(pCower, Cower);
             if (Punching) { anim.SetTrigger(pPunch); Punching = false; }
             transform.localScale = Sitting ? Vector3.one * 0.9f : Vector3.one;
+        }
+
+        /// <summary>
+        /// Mostra o modelo 3D da arma atual (Resources/Armas/WeaponFile). Cada arma é criada uma vez
+        /// e depois só liga/desliga. Sem modelo, usa as caixinhas antigas.
+        /// </summary>
+        void ShowWeapon()
+        {
+            string want = WeaponModel > 0 ? (WeaponFile ?? "") : "";
+            if (want == shownWeapon) return;
+            shownWeapon = want;
+            foreach (var w in weaponObjs.Values) if (w != null) w.gameObject.SetActive(false);
+            Transform obj = null;
+            if (want.Length > 0 && !weaponObjs.TryGetValue(want, out obj))
+            {
+                var prefab = Resources.Load<GameObject>("Armas/" + want);
+                if (prefab != null)
+                {
+                    obj = Instantiate(prefab, weaponMount).transform;
+                    obj.localPosition = Vector3.zero;
+                    obj.localRotation = Quaternion.identity;
+                }
+                weaponObjs[want] = obj;
+            }
+            if (obj != null) obj.gameObject.SetActive(true);
+            gunShort.gameObject.SetActive(obj == null && WeaponModel == 1);
+            gunLong.gameObject.SetActive(obj == null && WeaponModel == 2);
+            Muzzle = obj != null && obj.Find("Cano") != null ? obj.Find("Cano") : fallbackMuzzle;
         }
 
         void OnAnimatorAimPitch()
@@ -281,8 +390,7 @@ namespace DevCity
         {
             if (Rigged) { RiggedUpdate(); OnAnimatorAimPitch(); return; }
             float dt = Time.deltaTime;
-            gunShort.gameObject.SetActive(WeaponModel == 1);
-            gunLong.gameObject.SetActive(WeaponModel == 2);
+            ShowWeapon();
 
             // sentado no carro: um pouco menor, para a cabeça não atravessar o teto
             transform.localScale = Sitting ? Vector3.one * 0.85f : Vector3.one;

@@ -158,7 +158,10 @@ namespace DevCity
         {
             DriverOutfit = o;
             DriverRole = role;
-            DriverModel = Humanoid.Create(Seat, o);
+            // dentro do carro fica o boneco de blocos (os modelos 3D dos NPCs não têm animação de sentar);
+            // quando ele sai do carro, vira um pedestre com o modelo 3D (DriverOutfit.Model)
+            var seated = o; seated.Model = null;
+            DriverModel = Humanoid.Create(Seat, seated);
             DriverModel.Sitting = true;
         }
 

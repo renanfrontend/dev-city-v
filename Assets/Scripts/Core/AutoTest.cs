@@ -146,6 +146,101 @@ namespace DevCity
             Log($"posição a pé: {gm.Player.Position} | bairro: {gm.City.AreaName(gm.Player.Position)}");
             yield return Shot("2_a_pe");
 
+            // -fpsonly: só mede o desempenho (para comparar versões) e sai
+            if (System.Environment.GetCommandLineArgs().Contains("-fpsonly"))
+            {
+                yield return MeasureFps("parado na rua", 6f);
+                Log($"FIM | erros {errors} | exceções {exceptions}");
+                yield return new WaitForSecondsRealtime(0.5f);
+                Application.Quit();
+                yield break;
+            }
+
+            // cenário: fotos de 4 bairros (centro, comercial, casas e porto)
+            {
+                float hourBefore = gm.DayNight.Hour;
+                gm.DayNight.Hour = 12f; // meio-dia, para enxergar bem
+                var cam = gm.Cam;
+                cam.Override = true;
+                var views = new (string name, Vector2 block, float height)[] { ("centro", new Vector2(5f, 5f), 70f), ("comercial", new Vector2(3f, 6f), 35f), ("casas", new Vector2(1f, 8f), 22f), ("porto", new Vector2(8f, 2f), 35f) };
+                foreach (var v in views)
+                {
+                    Vector3 c = new Vector3(v.block.x * CityGenerator.P + CityGenerator.ROAD + 26f, 0f, v.block.y * CityGenerator.P + CityGenerator.ROAD + 26f);
+                    cam.transform.position = c + new Vector3(-55f, v.height, -55f);
+                    cam.transform.rotation = Quaternion.LookRotation(c + Vector3.up * 6f - cam.transform.position);
+                    yield return new WaitForSecondsRealtime(0.4f);
+                    Log($"cenário {v.name}: {gm.City.AreaName(c)}");
+                    yield return Shot("2c_cidade_" + v.name);
+                }
+                // de perto: uma casa e um prédio comercial vistos da rua (para conferir se a frente olha para a rua)
+                foreach (var (nm, blk) in new[] { ("casa_perto", new Vector2Int(1, 8)), ("predio_perto", new Vector2Int(3, 6)) })
+                {
+                    float x0 = blk.x * CityGenerator.P + CityGenerator.ROAD, z0 = blk.y * CityGenerator.P + CityGenerator.ROAD;
+                    // na rua ao sul do quarteirão, olhando para o norte (para as fachadas viradas para essa rua)
+                    cam.transform.position = new Vector3(x0 + 13f, 2.2f, z0 - CityGenerator.ROAD / 2f);
+                    cam.transform.rotation = Quaternion.LookRotation(new Vector3(x0 + 13f, 4f, z0 + 12f) - cam.transform.position);
+                    yield return new WaitForSecondsRealtime(0.3f);
+                    yield return Shot("2d_" + nm);
+                }
+                Log($"modelos 3D na cidade: {GameObject.Find("Modelos3D")?.transform.childCount ?? 0}");
+                yield return MeasureFps("cidade (vista do centro)", 3f);
+                cam.Override = false;
+                gm.DayNight.Hour = hourBefore;
+            }
+
+            // NPCs 3D: quantos pedestres usam modelo 3D, e uma fileira deles para a foto
+            {
+                int com3d = Ped.All.Count(pd => pd != null && pd.Model.Rigged);
+                Log($"NPCs com modelo 3D: {com3d} de {Ped.All.Count}");
+                var pl = gm.Player;
+                var fila = new System.Collections.Generic.List<Ped>();
+                var roles = new[] { PedRole.Civilian, PedRole.Civilian, PedRole.Civilian, PedRole.Gang, PedRole.Cop, PedRole.Civilian };
+                for (int k = 0; k < roles.Length; k++)
+                {
+                    var pd = Ped.Spawn(pl.transform.position + pl.transform.forward * 5f + pl.transform.right * ((k - 2.5f) * 1.2f), roles[k]);
+                    pd.transform.rotation = Quaternion.LookRotation(-pl.transform.forward);
+                    fila.Add(pd);
+                }
+                var cam = gm.Cam;
+                cam.Override = true;
+                float hourBefore = gm.DayNight.Hour;
+                gm.DayNight.Hour = 12f;
+                cam.transform.position = pl.transform.position + pl.transform.forward * 0.5f + Vector3.up * 1.7f;
+                cam.transform.rotation = Quaternion.LookRotation(pl.transform.position + pl.transform.forward * 5f + Vector3.up * 1f - cam.transform.position);
+                yield return new WaitForSecondsRealtime(0.5f);
+                yield return Shot("2e_npcs");
+                fila[0].Kill(false);
+                yield return new WaitForSecondsRealtime(1.5f);
+                Log($"NPC morto: animação de morte {(fila[0].Model.DeathAnimated ? "sim" : "não (cai de lado)")}");
+                yield return Shot("2f_npc_morte");
+                gm.DayNight.Hour = hourBefore;
+                cam.Override = false;
+                foreach (var pd in fila) if (pd != null) Destroy(pd.gameObject);
+            }
+
+            // armas 3D: cada arma na mão, mirando, foto de perto (câmera de lado)
+            {
+                var pl = gm.Player;
+                foreach (var w in Weapons.All) if (!w.Melee && !w.Thrown) pl.Weapons.Give(w, 30);
+                PlayerWeapons.ScriptedAim = true;
+                var cam = gm.Cam;
+                cam.Override = true;
+                foreach (int slot in new[] { 1, 2, 3, 4, 5 })
+                {
+                    pl.Weapons.Select(slot);
+                    yield return new WaitForSecondsRealtime(0.6f);
+                    var tr = pl.transform;
+                    cam.transform.position = tr.position + tr.right * 1.6f + tr.forward * 0.9f + Vector3.up * 1.55f;
+                    cam.transform.rotation = Quaternion.LookRotation(tr.position + Vector3.up * 1.35f + tr.forward * 0.35f - cam.transform.position);
+                    var cano = pl.Model.Muzzle;
+                    Log($"arma {Weapons.All[slot].Name}: modelo 3D {(cano != null && cano.parent != null && cano.parent.name.StartsWith("arma-") ? "sim" : "não")} | cano a {(cano != null ? Vector3.Distance(cano.position, tr.position + Vector3.up * 1.4f) : 0f):0.00} m do peito");
+                    yield return Shot("2b_arma_" + slot);
+                }
+                cam.Override = false;
+                PlayerWeapons.ScriptedAim = false;
+                pl.Weapons.Select(0);
+            }
+
             // carro ao lado do jogador
             var p = gm.Player;
             Vector3 spawn = p.transform.position + p.transform.right * 3.5f;

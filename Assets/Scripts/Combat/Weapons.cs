@@ -9,7 +9,8 @@ namespace DevCity
         public float Damage, Rate, Spread, Range = 120f;
         public int Mag, Pellets = 1, Price, AmmoPrice, AmmoPack, StartAmmo;
         public bool Auto, Melee, Thrown;
-        public int Model;          // 0 nada, 1 curta, 2 longa
+        public int Model;          // 0 nada, 1 curta, 2 longa (define a pose: mirar com uma ou duas mãos)
+        public string File;        // modelo 3D em Resources/Armas/<File> (Dev City → Preparar armas)
         public float Zoom;         // FOV ao mirar (0 = padrão)
         public AudioClip Sound;
     }
@@ -32,11 +33,11 @@ namespace DevCity
             All = new[]
             {
                 new WeaponDef { Name = "Punhos", Slot = 0, Damage = 14f, Rate = 0.45f, Range = 1.8f, Melee = true, Model = 0, Sound = Sfx.Punch },
-                new WeaponDef { Name = "Pistola Hawk .45", Slot = 1, Damage = 34f, Rate = 0.22f, Spread = 1.2f, Mag = 12, Price = 600, AmmoPrice = 60, AmmoPack = 36, StartAmmo = 48, Model = 1, Sound = Sfx.Pistol },
-                new WeaponDef { Name = "Submetralhadora Vespa", Slot = 2, Damage = 22f, Rate = 0.075f, Spread = 3f, Mag = 30, Auto = true, Price = 1800, AmmoPrice = 90, AmmoPack = 90, StartAmmo = 120, Model = 1, Sound = Sfx.Smg },
-                new WeaponDef { Name = "Escopeta Bulldog", Slot = 3, Damage = 16f, Rate = 0.85f, Spread = 6.5f, Range = 45f, Pellets = 8, Mag = 6, Price = 2600, AmmoPrice = 80, AmmoPack = 18, StartAmmo = 24, Model = 2, Sound = Sfx.Shotgun },
-                new WeaponDef { Name = "Fuzil AR-7 Falcão", Slot = 4, Damage = 30f, Rate = 0.105f, Spread = 1.6f, Range = 200f, Mag = 30, Auto = true, Price = 4500, AmmoPrice = 120, AmmoPack = 90, StartAmmo = 120, Model = 2, Sound = Sfx.Rifle, Zoom = 45f },
-                new WeaponDef { Name = "Rifle Longshot", Slot = 5, Damage = 150f, Rate = 1.2f, Spread = 0.05f, Range = 500f, Mag = 5, Price = 9000, AmmoPrice = 150, AmmoPack = 15, StartAmmo = 20, Model = 2, Sound = Sfx.Sniper, Zoom = 12f },
+                new WeaponDef { Name = "Pistola Hawk .45", Slot = 1, Damage = 34f, Rate = 0.22f, Spread = 1.2f, Mag = 12, Price = 600, AmmoPrice = 60, AmmoPack = 36, StartAmmo = 48, Model = 1, File = "arma-pistola", Sound = Sfx.Pistol },
+                new WeaponDef { Name = "Submetralhadora Vespa", Slot = 2, Damage = 22f, Rate = 0.075f, Spread = 3f, Mag = 30, Auto = true, Price = 1800, AmmoPrice = 90, AmmoPack = 90, StartAmmo = 120, Model = 1, File = "arma-submetralhadora", Sound = Sfx.Smg },
+                new WeaponDef { Name = "Escopeta Bulldog", Slot = 3, Damage = 16f, Rate = 0.85f, Spread = 6.5f, Range = 45f, Pellets = 8, Mag = 6, Price = 2600, AmmoPrice = 80, AmmoPack = 18, StartAmmo = 24, Model = 2, File = "arma-escopeta", Sound = Sfx.Shotgun },
+                new WeaponDef { Name = "Fuzil AR-7 Falcão", Slot = 4, Damage = 30f, Rate = 0.105f, Spread = 1.6f, Range = 200f, Mag = 30, Auto = true, Price = 4500, AmmoPrice = 120, AmmoPack = 90, StartAmmo = 120, Model = 2, File = "arma-fuzil", Sound = Sfx.Rifle, Zoom = 45f },
+                new WeaponDef { Name = "Rifle Longshot", Slot = 5, Damage = 150f, Rate = 1.2f, Spread = 0.05f, Range = 500f, Mag = 5, Price = 9000, AmmoPrice = 150, AmmoPack = 15, StartAmmo = 20, Model = 2, File = "arma-sniper", Sound = Sfx.Sniper, Zoom = 12f },
                 new WeaponDef { Name = "Granada", Slot = 6, Damage = 220f, Rate = 1f, Range = 7f, Mag = 1, Thrown = true, Price = 350, AmmoPrice = 350, AmmoPack = 1, StartAmmo = 3, Model = 0, Sound = Sfx.Click },
             };
         }
@@ -50,6 +51,7 @@ namespace DevCity
         public int[] Clip;
         public int Current;
         public bool Aiming { get; private set; }
+        public static bool ScriptedAim; // AutoTest: mira sem o mouse
         public bool TargetUnderCrosshair { get; private set; }
         public WeaponDef Def => Weapons.All[Current];
 
@@ -121,7 +123,7 @@ namespace DevCity
 
             // dentro do carro só dá para atirar com armas curtas (drive-by)
             bool usable = canUse && (!inVehicle || (Def.Model == 1 && !Def.Melee));
-            bool wantAim = usable && Input.GetMouseButton(1) && !Def.Melee;
+            bool wantAim = usable && (Input.GetMouseButton(1) || ScriptedAim) && !Def.Melee;
             if (wantAim && !Aiming) StartAssist();
             Aiming = wantAim;
 
