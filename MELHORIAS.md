@@ -1,16 +1,31 @@
 # Revisão ampliada — 20/10/2026
 
-A revisão Windows isolada em Build/Revisao foi compilada com Unity 6000.6.5f1. O autotest completo de Logs/revisao-completo8.log terminou com **FIM | erros 0 | exceções 0**. Verificou veículos, portas e amassados, dez tipos de personagem na bancada, sobrevivência, história, enigmas, estoque do abrigo, atropelamentos, Protocolo Aurora e controles por toque.
+A revisão Windows isolada em Build/Revisao foi compilada com Unity 6000.6.5f1 (Logs/revisao-build9.log, Succeeded, 349 MB). O teste dirigido final Logs/revisao-final9.log terminou com **FIM | erros 0 | exceções 0**. O autotest completo de Logs/revisao-completo8.log terminou com **FIM | erros 0 | exceções 0**. Verificou veículos, portas e amassados, dez tipos de personagem na bancada, sobrevivência, história, enigmas, estoque do abrigo, atropelamentos, Protocolo Aurora e controles por toque.
 
 O Protocolo Aurora acrescenta mansões, cães, válvulas com rota alternativa por arrombamento, prontuário, dois estabilizadores e o painel clínico. A equipe extraterrestre é aliada: recolhe civis e captura o experimento humano vivo depois que o jogador reduz sua vitalidade e ativa as três âncoras. O chefe CC0 é Giant Mutant por Eldritch Grim; o cão deriva de uma única variante do Wolf de tomek (CC0).
 
-A pausa teve o texto dos botões corrigido e ganhou foco inicial de teclado. Os rigs próximos usam quatro influências por vértice; o custo diminui à distância. A animação procedural do Carrasco continua durante a investida, com cotovelos, joelhos e coluna articulados. A virada do chefe e o início do ataque foram sincronizados. O teste mediu articulação dos dois chefes durante as investidas e cerca de 65 graus de variação máxima no esqueleto do gigante. Isso não equivale a um sistema completo de ragdoll ou animação com captura própria.
+A pausa teve o texto dos botões corrigido e ganhou foco inicial de teclado. Os rigs próximos usam quatro influências por vértice; o custo diminui à distância. A animação procedural do Carrasco continua durante a investida, com cotovelos, joelhos e coluna articulados. A virada do chefe e o início do ataque foram sincronizados. O teste mediu articulação dos dois chefes durante as investidas e variação real das rotações dos ossos do gigante. Isso não equivale a um sistema completo de ragdoll ou animação com captura própria.
 
-Analógico, câmera por arraste, ações, carrossel e retorno de menus foram preparados para toque. A regressão acionou os handlers do Canvas e confirmou abrir, escolher e equipar. O save usa diretório persistente no Android e PlayerPrefs/IndexedDB na web. **APK e WebGL ainda dependem da instalação/compilação e não estão aprovados em dispositivo.**
+Analógico, câmera por arraste, ações, carrossel e retorno de menus foram preparados para toque. A regressão acionou os handlers do Canvas e confirmou abrir, escolher e equipar. O save usa diretório persistente no Android e PlayerPrefs/IndexedDB na web. **APK e WebGL não foram gerados:** os instaladores oficiais exigiram elevação e o Windows retornou “A operação foi cancelada pelo usuário”. Os módulos não foram instalados. Os downloads assinados e a configuração de build permanecem preparados; não houve teste em celular ou navegador.
 
-Desempenho: a regressão 8 mediu 36,8 FPS com oito ameaças e lanterna, e 43,7 FPS na vista do centro em 720p/HD 4000. Essas amostras ocorreram durante outras atividades de preparação; não substituem os pares alternados. A primeira ampliação teve quedas importantes; foram adicionados descarte visual de detalhes a 95 m, luz do abrigo por vértice no perfil fraco e liberação de recursos das miniaturas. O primeiro par alternado (Logs/fps8-antes.log e fps8-depois.log), com o mesmo save SHA-256 e13ff479480ef5a47d206c8b0467074c2ef9b95dea7764442d546769d973ca31, mediu rua 39,3 → 41,3 FPS e centro 57,4 → 56,6 FPS. A variação precisa ser conferida em novas rodadas; uma única dupla não garante o resultado em toda a cidade.
+Desempenho: a regressão 8 mediu 36,8 FPS com oito ameaças e lanterna, e 43,7 FPS na vista do centro em 720p/HD 4000. Essas amostras ocorreram durante outras atividades de preparação; não substituem os pares alternados. A primeira ampliação teve quedas importantes; foram adicionados descarte visual de detalhes a 95 m, luz do abrigo por vértice no perfil fraco e liberação de recursos das miniaturas. O primeiro par alternado (Logs/fps8-antes.log e fps8-depois.log), com o mesmo save SHA-256 e13ff479480ef5a47d206c8b0467074c2ef9b95dea7764442d546769d973ca31, mediu rua 39,3 → 41,3 FPS e centro 57,4 → 56,6 FPS. As três duplas e a queda observada na terceira rodada estão detalhadas na tabela abaixo.
 
 Build/Teste e a partida Windows aberta do usuário foram preservados. Os testes executam numa saída separada e restauram seu próprio save. O mobiliário e os prédios novos continuam sendo geometria simples; não há promessa de qualidade visual de produção nem desempenho aprovado em celulares ainda.
+
+
+
+### Comparação alternada final (720p, Intel HD 4000)
+
+| Par | Rua referência | Rua revisão | Centro referência | Centro revisão |
+|---|---:|---:|---:|---:|
+| 1 | 39.3 | 41.3 | 57.4 | 56.6 |
+| 2 | 46 | 44 | 57.6 | 58.4 |
+| 3 | 41.5 | 43 | 59 | 47 |
+
+Médias: rua 42,3 → 42,8 FPS; centro 58,0 → 54,0 FPS. O terceiro par do centro (59 → 47) mostra variação e queda que não permitem afirmar equivalência completa com a referência. As duas primeiras duplas ficaram próximas. Todos os seis processos terminaram com FIM | erros 0 | exceções 0 e usaram o mesmo save. O usuário manteve sua outra cópia do jogo aberta; não foi encerrada para medir.
+
+O teste final da configuração normal (Logs/revisao-normal9.log) confirmou campanha/GPS, polícia ausente e cenário normal, terminou com FIM | erros 0 | exceções 0 e mediu **50,7 FPS** na horda. O pior quadro foi 84 ms: ainda há oscilações pontuais. Não houve teste em celular ou navegador.
+
 
 As informações abaixo registram a revisão histórica anterior; os valores de FPS e o papel do alienígena nela não descrevem a revisão ampliada.
 

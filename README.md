@@ -16,7 +16,7 @@ As naves recolhem civis para resgate e quarentena. Cães contaminados protegem a
 
 ## Imagens da revisão local
 
-Capturas reais do autotest; a interface de toque está habilitada nas imagens desta revisão.
+Capturas reais do autotest; as cenas mostram a missão de contenção e os serviços do abrigo.
 
 ![Captura do experimento pela nave aliada](Documentacao/Imagens/autotest_operacao_nave_captura.png)
 
@@ -57,7 +57,7 @@ O curativo portátil leva 1,8 segundo; movimento ou dano interrompe o uso sem co
 
 Os controles por toque incluem analógico, arraste para câmera, ações e seleção de armas. O botão VOLTAR fecha diário, enigmas, lojas e mapa. Para inspecionar o layout no Windows, use -touchcontrols.
 
-Os alvos de saída são **Build/Android/DevCityV.apk** e **Build/Web/**. A disponibilidade e a validação de cada pacote serão registradas em MELHORIAS.md; a existência dos métodos de build não significa que os pacotes foram gerados ou testados em aparelho.
+**APK e WebGL ainda não foram gerados:** a abertura dos instaladores dos módulos foi cancelada pelo Windows. Os alvos preparados são **Build/Android/DevCityV.apk** e **Build/Web/**. A disponibilidade e a validação de cada pacote serão registradas em MELHORIAS.md; a existência dos métodos de build não significa que os pacotes foram gerados ou testados em aparelho.
 
 O APK de desenvolvimento usa ARM64, orientação horizontal e save no diretório persistente do aplicativo. A versão web salva por PlayerPrefs/IndexedDB, vinculada à origem do site; limpar os dados do navegador apaga esse progresso. A web precisa ser servida por HTTP/HTTPS, sem abrir index.html diretamente pelo sistema de arquivos. Com Node.js instalado, execute `node Ferramentas/servir-web.mjs` na raiz e abra http://127.0.0.1:8080.
 
