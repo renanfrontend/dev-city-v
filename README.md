@@ -1,78 +1,103 @@
-# Dev City V
+# Dev City — Última Noite
 
-Jogo de mundo aberto em 3D para Windows, feito em **Unity 6 + C#**, inspirado nas mecânicas de **Grand Theft Auto V**.
-A lógica é toda em código (cidade, trânsito, polícia, missões, sons e interface). Os modelos 3D são gratuitos (Kenney e Quaternius, CC0/CC-BY) e já vêm no repositório; sem eles, o jogo volta para os modelos de caixas.
+Esta página descreve a revisão local em desenvolvimento. A documentação é publicada separadamente; o repositório ainda não contém todas as alterações e assets da cópia local, e os builds não são distribuídos por este README.
 
-> Projeto de fã, sem fins comerciais. Nomes, marcas, armas e lugares são fictícios.
-> Veículos: Car Kit por [Kenney](https://www.kenney.nl) (CC0). Motos do [Poly Pizza](https://poly.pizza): "Motorcycle" por Poly by Google e "Vespa" por Jasmine Roberts (CC-BY 3.0), "Cartoony Purple Motorcycle" por AliceCassie (CC0). Detalhes em `Assets/Veiculos/MotosOriginais/LICENCA-Motos.txt`.
-> Cidade: City Kits por Kenney (CC0). Armas e NPCs: Ultimate Guns Pack e Ultimate Modular Men/Women por [Quaternius](https://quaternius.com) (CC0; os modelos femininos "Suit" e "Worker" são CC-BY 3.0). Listas em `Assets/Resources/Cidade/LICENCA-Kenney.txt`, `Assets/Armas/Originais/LICENCA-Armas.txt` e `Assets/Resources/NPCs/LICENCA-NPCs.txt`.
+Jogo de terror e sobrevivência em terceira pessoa dentro de Dev City. Você acorda no abrigo destruído e procura Helena e Lia, sua família, enquanto investiga o acidente que tomou a cidade. Carros e motos continuam utilizáveis, com portas, danos na lataria e atropelamentos.
 
-## Como abrir
+## História e objetivos
 
-1. Instale o **Unity Hub** e o **Unity 6** (testado com `6000.6.5f1`) e ative a licença Personal no Hub.
-2. No Hub: **Add → Add project from disk** → escolha a pasta `C:\Projetos\DevCityV`.
-3. Abra a cena `Assets/Scenes/DevCity.unity` e aperte **Play**. A cena e as configurações do projeto já foram preparadas.
+1. **Sem Sinal:** encontre o fusível da oficina, decifre os relés e defenda o gerador do abrigo.
+2. **Último Comboio:** investigue o registro do hospital, resgate Helena e Lia e leve as duas de carro ao abrigo.
+3. **Protocolo Aurora:** encontre a equipe extraterrestre no Hospital Psiquiátrico Santa Aurora. Os visitantes vieram ajudar: o gigante é um experimento humano que rompeu a contenção. Investigue a mansão do Dr. Mota, resolva as válvulas ou arrombe o portão, busque dois estabilizadores e decifre o prontuário. Destrua os ninhos do Hospital Central, enfraqueça o experimento até 25% e ative três âncoras para a nave capturá-lo vivo.
+4. **O Carrasco:** enfrente o guardião da transmissão perto da delegacia.
+5. **O Último Sinal:** resolva a matriz do emissor e encerre as ondas. A família se reúne e o dia retorna; a exploração continua.
 
-## Como gerar o .exe
+As naves recolhem civis para resgate e quarentena. Cães contaminados protegem a mansão; a passagem de serviço oferece outra aproximação. Espíritos, palhaços, psicopatas, rastejantes, monstros e zumbis mantêm comportamentos distintos. O diário reúne as pistas encontradas.
 
-- No editor: **File → Build Profiles → Windows → Build**. O jogo já tem uma cena incluída no perfil de build.
-- Pela linha de comando:
+## Imagens da revisão local
 
-```bash
-"C:/Program Files/Unity/Hub/Editor/6000.6.5f1/Editor/Unity.exe" -batchmode -quit -projectPath "C:/Projetos/DevCityV" -executeMethod DevCity.EditorTools.BuildTools.BuildWindows -logFile build.log
-```
+Capturas reais do autotest; a interface de toque está habilitada nas imagens desta revisão.
 
-## Controles
+![Captura do experimento pela nave aliada](Documentacao/Imagens/autotest_operacao_nave_captura.png)
 
-| Tecla | A pé | No carro |
-|---|---|---|
-| WASD | andar | acelerar / frear / ré / virar |
-| Mouse | câmera | câmera (volta sozinha para trás) |
-| Shift | correr (gasta estamina) | — |
-| Espaço | pular | freio de mão (derrapar) |
-| F | entrar no carro / roubar | sair (andando rápido = pular do carro) |
-| Botão direito | mirar (mira assistida) | mirar (drive-by com arma curta) |
-| Botão esquerdo | atirar / socar | atirar |
-| R | recarregar | recarregar |
-| Tab (segurar) | roda de armas (câmera lenta) | roda de armas |
-| 1–7 / rodinha | trocar arma | trocar arma |
-| E | interagir (lojas, casa) | buzina |
-| H / G | — | faróis / sirene (viatura) |
-| M | mapa (clique marca destino no GPS) | mapa |
-| Alt (segurar) | trocar entre Trevor e Jacob | trocar entre Trevor e Jacob |
-| Esc | pausa | pausa |
+![Serviços do abrigo](Documentacao/Imagens/autotest_abrigo_servicos.png)
 
-## O que tem no jogo
+## Abrigo, suprimentos e combate
 
-- **Dois protagonistas, Trevor e Jacob**: cada um com dinheiro, armas, roupa e casa próprios. Segure **Alt** para trocar, com a câmera do céu do GTA V. Os modelos podem vir da Mixamo: veja o [TUTORIAL-PERSONAGENS.md](TUTORIAL-PERSONAGENS.md).
-- **Carros 3D do Car Kit da Kenney** (CC0): sedã, esportivo, SUV, táxi, van, viatura, blindado e carro-forte, com rodas de verdade girando e esterçando. Veja o [TUTORIAL-VEICULOS.md](TUTORIAL-VEICULOS.md).
+A casa possui quarto, sala, cozinha, rádio para salvar, armário de armas e bancada médica. Guarde e retire armas com a respectiva munição; transfira curativos e retire coletes do estoque limitado. O progresso e o estoque são salvos juntos.
 
-- **Cenário, armas e NPCs 3D**: prédios, casas, galpões e contêineres dos City Kits da Kenney; 5 armas 3D da Quaternius na mão dos personagens; 15 tipos de NPC animados (executivos, operários, punks, SWAT...). Veja o [TUTORIAL-MODELOS.md](TUTORIAL-MODELOS.md).
-- **Cidade aberta**: 10×10 quadras com centro de arranha-céus, prédios médios, bairro de casas com piscina, porto com contêineres, praças, praia e mar (dá para nadar), semáforos, postes, ciclo de dia e noite (1 minuto do jogo = 2 s, como no GTA V) com janelas acendendo à noite.
-- **Personagem em 3ª pessoa**: corre com estamina, pula, nada, leva dano de queda, vida de 200 que regenera até 50%, colete.
-- **Veículos com física**: 9 carros (sedã, esportivo, SUV, táxi, van, viatura, blindado SWAT, carro-forte, ambulância) e 5 motos (Raio 600, Café Racer 250, Lobo Chopper, Roxinha e a scooter Vespina 50; 2 rodas, deitam nas curvas), suspensão, derrapagem no freio de mão, dano, fumaça, fogo, explosão com destroços, faróis, sirene. Entrar e sair com as animações da Mixamo, roubar com motorista dentro, pular do carro andando.
-- **Cidade viva**: pedestres que andam pelas calçadas, atravessam na faixa, fogem de tiros, se encolhem, levantam as mãos, ligam para a polícia e deixam dinheiro cair; trânsito que respeita semáforo, buzina, desvia e foge.
-- **Nível de procurado (1–5★)**: polícia com cone de visão; estrelas piscam quando ela te perde de vista; some em 30/45/60/75/90 s; helicóptero com atirador, bloqueios e SWAT nos níveis altos; WASTED e BUSTED com hospital, delegacia e multas.
-- **Combate**: 7 armas fictícias, mira assistida, tiro na cabeça, granadas, soco, drive-by.
-- **Lojas**: arsenal, roupas, mercadinho (comprar ou assaltar), Pinta & Foge (repinta e despista a polícia), casa (salvar e dormir).
-- **Missões**: 5 missões de história com contatos (Dudu, Dona Neide, Gordo, Professor) e o Racha da Orla (contra o relógio).
-- **Interface estilo GTA V**: radar que gira com a câmera e mostra a rota do GPS, mapa grande com destino, estrelas, dinheiro, arma, legendas, "MISSÃO CUMPRIDA".
+Lojas vendem munição, armas, curativos, coletes e cargas remotas. Durante a noite há atendimento de emergência na loja de armas. Uma carga permite abrir o portão da mansão, mas atrai cães. Atropelamentos causam dano e deixam marcas temporárias de sangue e pneus; o sistema limita a quantidade de marcas para controlar o custo.
 
-## Estrutura do código
+Noites longas, neblina, lua fria, postes oscilantes, árvores secas e fachadas abandonadas compõem o ambiente. Os sons de vento, passos, rádio, coração, rugidos e impactos são sintetizados pelo jogo. Os prédios e interiores ainda usam geometria simples com materiais fotográficos; a arte continua em desenvolvimento.
 
-```
-Assets/Scripts
-├─ Core/        GameManager (monta tudo), Mats (materiais/texturas), Gen (malhas e sprites), Sfx (sons), Fx (efeitos, explosão, pickups)
-├─ World/       CityGenerator (cidade + grafo de ruas + textura do mapa), DayNightCycle, Gps/Marker/SaveSystem, ShopSystem
-├─ Characters/  PlayerController, CameraRig, Humanoid (boneco animado), Ped (NPC), PedestrianSystem
-├─ Vehicles/    VehicleController (física), VehicleFactory (modelos), TrafficSystem (+ IA do trânsito)
-├─ Police/      WantedSystem, PoliceSystem (+ IA das viaturas), Helicopter
-├─ Combat/      Weapons (armas, mira, tiro, granada)
-├─ Missions/    MissionSystem e as missões
-└─ UI/          HUD, MinimapSystem
-Assets/Editor/BuildTools.cs   configuração e build automático para Windows
-```
+## Como jogar no Windows
 
-O guia de onde melhorar cada parte está em [MELHORIAS.md](MELHORIAS.md).
+Na cópia local de desenvolvimento, execute **Build/Revisao/DevCityV.exe** para a revisão mais recente. **Build/DevCityV.exe** pode estar numa revisão anterior enquanto uma partida estiver aberta. Não mova somente o executável: mantenha a pasta de dados, UnityPlayer.dll e Licencas ao lado dele.
 
-O progresso é salvo em `DevCityV_Save.json` ao lado do executável. Para distribuir o jogo, copie a pasta `Build` inteira, não apenas o `.exe`.
+O jogo inicia na cidade sem argumentos. Clique na tela de título ou pressione Enter. Uma partida nova começa com o despertar no abrigo. Saves anteriores continuam a campanha no ponto já concluído; o prólogo não é repetido automaticamente.
+
+| Controle | Ação |
+|---|---|
+| WASD / mouse | Andar, dirigir e olhar |
+| Shift / Ctrl / Espaço | Correr / esquivar / saltar ou freio de mão |
+| F | Entrar e sair do veículo |
+| E | Interagir; segurar em objetivos; buzina no carro |
+| Botão direito / esquerdo | Mirar / atirar |
+| R | Recarregar |
+| Tab segurado | Abrir carrossel; roda ou setas escolhem; solte para equipar |
+| 1–7 / roda | Trocar arma |
+| B | Instalar carga; B novamente detona |
+| H | Usar curativo a pé; faróis no carro |
+| L / J / M | Lanterna / diário / mapa |
+| Esc | Pausa com Continuar, Mapa, Salvar e Sair |
+
+O curativo portátil leva 1,8 segundo; movimento ou dano interrompe o uso sem consumir o item. Preserve o fôlego para esquivar das investidas anunciadas pelos chefes.
+
+## Android e navegador
+
+Os controles por toque incluem analógico, arraste para câmera, ações e seleção de armas. O botão VOLTAR fecha diário, enigmas, lojas e mapa. Para inspecionar o layout no Windows, use -touchcontrols.
+
+Os alvos de saída são **Build/Android/DevCityV.apk** e **Build/Web/**. A disponibilidade e a validação de cada pacote serão registradas em MELHORIAS.md; a existência dos métodos de build não significa que os pacotes foram gerados ou testados em aparelho.
+
+O APK de desenvolvimento usa ARM64, orientação horizontal e save no diretório persistente do aplicativo. A versão web salva por PlayerPrefs/IndexedDB, vinculada à origem do site; limpar os dados do navegador apaga esse progresso. A web precisa ser servida por HTTP/HTTPS, sem abrir index.html diretamente pelo sistema de arquivos. Com Node.js instalado, execute `node Ferramentas/servir-web.mjs` na raiz e abra http://127.0.0.1:8080.
+
+## Compilar a partir do projeto
+
+Use **Unity 6000.6.5f1** e a cena Assets/Scenes/DevCity.unity. Feche o Editor deste projeto antes da compilação pela linha de comando. As saídas ficam em Build/; **Build/Teste e seu save são reservados ao usuário**.
+
+~~~powershell
+$unity = 'C:/Program Files/Unity/Hub/Editor/6000.6.5f1/Editor/Unity.exe'
+& $unity -batchmode -quit -nographics -projectPath 'C:/Projetos/DevCityV' -executeMethod DevCity.EditorTools.BuildTools.BuildPreviewWindows -logFile 'C:/Projetos/DevCityV/Logs/build-windows.log'
+# Com os módulos oficiais correspondentes instalados:
+& $unity -batchmode -quit -nographics -buildTarget Android -projectPath 'C:/Projetos/DevCityV' -executeMethod DevCity.EditorTools.PlatformBuildTools.BuildAndroid -logFile 'C:/Projetos/DevCityV/Logs/build-android.log'
+& $unity -batchmode -quit -nographics -buildTarget WebGL -projectPath 'C:/Projetos/DevCityV' -executeMethod DevCity.EditorTools.PlatformBuildTools.BuildWeb -logFile 'C:/Projetos/DevCityV/Logs/build-web.log'
+~~~
+
+**Assets externos:** este repositório de desenvolvimento não inclui todos os arquivos pesados da cópia local nem os FBX originais do Mixamo. Um clone limpo pode precisar preparar os personagens, veículos e cenários pelos importadores de Assets/Editor. Consulte os arquivos LICENCA-* e os tutoriais antes de baixar e importar as fontes. Os direitos sobre Mixamo não autorizam republicar os arquivos brutos como biblioteca de assets.
+
+## Validação
+
+~~~powershell
+& './Build/Revisao/DevCityV.exe' -autotest -terroronly -screen-width 1280 -screen-height 720 -screen-fullscreen 0 -logFile 'C:/Projetos/DevCityV/Logs/autotest.log'
+~~~
+
+- -autotest: regressão completa, incluindo carros, motos, portas, amassados, física e campanha.
+- -autotest -terroronly: ameaças, armas, puzzles, história, abrigo, operação e captura.
+- -autotest -terrorjogo: configuração normal, população, ausência da polícia e horda.
+- -autotest -fpsonly: medição de desempenho; compare builds alternados em 720p com o mesmo save.
+
+A meta é **FIM | erros 0 | exceções 0**. Fotos e logs ficam na pasta de saída e em Logs/. As medidas antigas de 44–54 FPS pertencem à revisão anterior à ampliação do abrigo e da operação. A revisão ampliada apresentou queda em medições preliminares na Intel HD 4000; não considere o desempenho aprovado sem consultar os resultados atuais de [MELHORIAS.md](MELHORIAS.md).
+
+## Autores e licenças
+
+**CC BY 4.0, personagens originais:** mizahad_Dev (palhaço), Zajjj_ (possuída), 3dmodelsst (psicopata e Carrasco), oscar_creativo (monstro e zumbi), wojciechmiedziocha (rastejante), Purple.Point (dama). Fontes e adaptações: [LICENCA-Terror.txt](Assets/Terror/LICENCA-Terror.txt).
+
+**CC0, novos personagens:** [Giant Mutant por Eldritch Grim](https://opengameart.org/content/giant-mutant), adaptado como Experimento Aurora, com animações nativas e LODs; [Wolf por tomek](https://opengameart.org/content/3d-wolf-animation-for-game), usando a opção CC0 oferecida pelo autor, adaptado como cão contaminado. O boss da HATOGAME sugerido não foi utilizado devido à licença Editorial.
+
+**CC0, cenário Poly Haven:** Rico Cilliers (Tree Small 02), Rob Tuytel e Dimitrios Savva (Brick Wall 001), Dario Barresi e Charlotte Baglioni (Concrete Wall 006), Rob Tuytel (Old Planks 02). Powered by Poly Haven. Fontes: [LICENCA-Cenario.txt](Assets/Terror/LICENCA-Cenario.txt). Geometria original de interiores, mansões, hospital e visitantes: CC0.
+
+**Veículos CC BY 4.0:** Daniel Zhabotinsky; comrade1280, Alexios_Apokaukos, Alex.Ka. e graphix. Kenney, Quaternius, Mixamo e demais autores anteriores permanecem creditados em [README-CLASSICO.md](README-CLASSICO.md) e nos arquivos LICENCA-* dos assets. As atribuições acompanham os builds em Licencas e aparecem no título. Nenhum personagem cinematográfico foi adicionado.
+
+## Documentação do projeto
+
+[Tutorial de terror](TUTORIAL-TERROR.md) · [Veículos](TUTORIAL-VEICULOS.md) · [Resultados e limites](MELHORIAS.md) · [Relatório de continuidade](PROXIMOS-PASSOS-TERROR.md)

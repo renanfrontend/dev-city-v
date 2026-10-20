@@ -1,0 +1,47 @@
+Personagens de Dev City — Última Noite — origem e licença
+=======================================================
+
+Baixados do Sketchfab (https://sketchfab.com) em 20/10/2026 (com a aprovação do Renan), originais em
+Assets/Terror/Originais~ (pasta terminada em "~": o Unity ignora; derivados usados no jogo estão em Modelos e Resources/Terror).
+Todos têm licença Creative Commons Attribution 4.0 (CC BY 4.0): https://creativecommons.org/licenses/by/4.0/
+Pode usar e modificar, até em jogo comercial, DESDE QUE dê crédito ao autor (tela de título, README e aqui).
+
+Arquivo          Papel no jogo                  Modelo original                      Autor               Link
+---------------  -----------------------------  -----------------------------------  ------------------  -----------------------------------------------------
+palhaco.zip      Palhaço assassino              Killer Clown 3D (MIXAMO RIGGED)      mizahad_Dev         https://sketchfab.com/models/8971f92afda940b88dea10057d4d8973
+possuida.glb     Possuída (estilo "menina do    Scary Woman                          Zajjj_              https://sketchfab.com/models/761c6998a59b4ea8a8aee5bffb1ec5a6
+                 poço": vestido branco, cabelo
+                 preto no rosto)
+psicopata.glb    Psicopata (máscara de gás)     Stalker                              3dmodelsst          https://sketchfab.com/models/dee96dabf19d4d008600e26f86387cd9
+monstro.glb      Monstro (zumbi grandão)        Zombie Walk Test                     oscar_creativo      https://sketchfab.com/models/165fd9342c364216bfdd8c2f1102223c
+rastejante.glb   Rastejante (criatura magra)    zombie monster slasher necromorph    wojciechmiedziocha  https://sketchfab.com/models/d2f9be4f379a410f8c88745921bde6a0
+dama.glb         Dama de preto (encapuzada)     Terrifying Hooded Horror Woman       Purple.Point        https://sketchfab.com/models/f59d17be392f4494a5b85d927df48ffd
+
+Cuidados:
+- Personagens de filmes (Samara, Pennywise, Jason, Michael Myers, Art the Clown...) são marcas/obras protegidas:
+  NÃO baixe nem use. Os escolhidos são genéricos.
+- palhaco.zip é o "source" (FBX com esqueleto da Mixamo + texturas); os outros são .glb com texturas de 2048 px
+  (rastejante 1024). Triângulos: palhaço 56 mil, possuída 27 mil, psicopata 23 mil, monstro 33 mil,
+  rastejante 6 mil, dama 40 mil -> reduzir para ~20–25 mil no LOD0 (ver PROXIMOS-PASSOS-TERROR.md).
+
+Adaptações desta distribuição:
+- Materiais Standard salvos, texturas importadas em até 1024 px e LODs simplificados.
+- Palhaço, possuída, monstro e dama com avatares Humanoid; rastejante conserva animação própria.
+- Psicopata: pose inicial consolidada como repouso, pesos preservados e movimento procedural do rig.
+- Zumbi comum: variante menor e dessaturada do modelo monstro de oscar_creativo; chefe Vigia: variante ampliada do mesmo modelo. Carrasco: variante do psicopata de 3dmodelsst. Autores, fontes e licença CC BY 4.0 permanecem os indicados acima.
+- Comportamentos, sons sintetizados, armas adicionais e iluminação pertencem à implementação do jogo.
+- Estas adaptações não implicam apoio ou endosso dos autores ao jogo.
+
+Alienígena genérico: geometria original desta implementação (CityAlienVisual.cs), disponibilizada sob CC0 1.0. Não deriva de personagem de filme. Comportamento, projétil e sons são próprios do jogo.
+
+
+EXPERIMENTO AURORA — Giant Mutant, por Eldritch Grim
+Fonte: https://opengameart.org/content/giant-mutant
+Licença escolhida: CC0 1.0 — https://creativecommons.org/publicdomain/zero/1.0/
+Adaptações: redução para 24 mil triângulos, três LODs, materiais Standard e animações nativas; altura de 6,5 m.
+
+CÃES CONTAMINADOS — Wolf, por tomek
+Fonte: https://opengameart.org/content/3d-wolf-animation-for-game
+Licença escolhida entre as alternativas oferecidas pelo autor: CC0 1.0.
+Adaptações: materiais Standard, LODs e reaproveitamento das animações de caminhada, corrida e ataque; 1348 triângulos na variante selecionada.
+O modelo HATOGAME sugerido não foi usado: sua licença Editorial não autorizava esta integração.

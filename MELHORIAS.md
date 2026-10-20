@@ -1,122 +1,71 @@
-# Onde trabalhar para deixar o Dev City V mais parecido com o GTA V
+# Revisão ampliada — 20/10/2026
 
-Este guia está em ordem de **impacto na sensação de "estou jogando GTA"**. Cada item diz *onde* mexer no código.
-Os números de ajuste rápido estão no fim.
+A revisão Windows isolada em Build/Revisao foi compilada com Unity 6000.6.5f1. O autotest completo de Logs/revisao-completo8.log terminou com **FIM | erros 0 | exceções 0**. Verificou veículos, portas e amassados, dez tipos de personagem na bancada, sobrevivência, história, enigmas, estoque do abrigo, atropelamentos, Protocolo Aurora e controles por toque.
 
-### Resultado do teste neste PC
+O Protocolo Aurora acrescenta mansões, cães, válvulas com rota alternativa por arrombamento, prontuário, dois estabilizadores e o painel clínico. A equipe extraterrestre é aliada: recolhe civis e captura o experimento humano vivo depois que o jogador reduz sua vitalidade e ativa as três âncoras. O chefe CC0 é Giant Mutant por Eldritch Grim; o cão deriva de uma única variante do Wolf de tomek (CC0).
 
-No Intel HD Graphics 4000 (128 MB), a execução com imagem ficou em cerca de 27–31 FPS no título, 36–40 FPS a pé, 38 FPS na perseguição e 28 FPS à noite. O teste automático chegou ao fim com 4 viaturas, 1 helicóptero e nenhum erro ou exceção em uma execução completa. São medidas de um percurso automatizado curto, não de uma sessão de jogo manual. Antes de adicionar efeitos gráficos caros, mantenha uma opção de qualidade baixa e compare o FPS nas mesmas cenas.
+A pausa teve o texto dos botões corrigido e ganhou foco inicial de teclado. Os rigs próximos usam quatro influências por vértice; o custo diminui à distância. A animação procedural do Carrasco continua durante a investida, com cotovelos, joelhos e coluna articulados. A virada do chefe e o início do ataque foram sincronizados. O teste mediu articulação dos dois chefes durante as investidas e cerca de 65 graus de variação máxima no esqueleto do gigante. Isso não equivale a um sistema completo de ragdoll ou animação com captura própria.
 
----
+Analógico, câmera por arraste, ações, carrossel e retorno de menus foram preparados para toque. A regressão acionou os handlers do Canvas e confirmou abrir, escolher e equipar. O save usa diretório persistente no Android e PlayerPrefs/IndexedDB na web. **APK e WebGL ainda dependem da instalação/compilação e não estão aprovados em dispositivo.**
 
-## 1. Personagens e animação (o maior salto visual)
+Desempenho: a regressão 8 mediu 36,8 FPS com oito ameaças e lanterna, e 43,7 FPS na vista do centro em 720p/HD 4000. Essas amostras ocorreram durante outras atividades de preparação; não substituem os pares alternados. A primeira ampliação teve quedas importantes; foram adicionados descarte visual de detalhes a 95 m, luz do abrigo por vértice no perfil fraco e liberação de recursos das miniaturas. O primeiro par alternado (Logs/fps8-antes.log e fps8-depois.log), com o mesmo save SHA-256 e13ff479480ef5a47d206c8b0467074c2ef9b95dea7764442d546769d973ca31, mediu rua 39,3 → 41,3 FPS e centro 57,4 → 56,6 FPS. A variação precisa ser conferida em novas rodadas; uma única dupla não garante o resultado em toda a cidade.
 
-Hoje o boneco é feito de blocos e animado por código (`Characters/Humanoid.cs`).
+Build/Teste e a partida Windows aberta do usuário foram preservados. Os testes executam numa saída separada e restauram seu próprio save. O mobiliário e os prédios novos continuam sendo geometria simples; não há promessa de qualidade visual de produção nem desempenho aprovado em celulares ainda.
 
-- **Trocar por um modelo humanoide com Animator.** Use personagens e animações gratuitos da [Mixamo](https://www.mixamo.com) (idle, walk, run, sprint, jump, aim pistol/rifle, shoot, punch, hands up, sit in car, enter car).
-  Crie um `Animator Controller` com parâmetros `Speed`, `Aim`, `HandsUp`, `Sitting`, `Cower` e faça o `Humanoid.cs` apenas repassar esses valores (a interface pública dele já tem exatamente esses campos, então o resto do jogo não muda).
-- **IK de mira e dos pés** (`OnAnimatorIK`): a arma aponta exatamente para a mira e os pés acompanham a calçada.
-- **Ragdoll de verdade** no lugar do "Knock" (`Ped.Knock`, `PlayerController.Knock`): GameObject → 3D Object → Ragdoll… no modelo e ative ao morrer/ser atropelado. É o que dá aquele "voo" característico do GTA.
-- **Animação de entrar no carro** (abrir porta, puxar o motorista): hoje é um deslize de 0,3 s em `PlayerController.EnterRoutine`.
-
-## 2. Veículos
-
-Arquivos: `Vehicles/VehicleController.cs` (física) e `Vehicles/VehicleFactory.cs` (modelos e números de cada carro).
-
-- **Modelo de pneu melhor**: hoje o atrito lateral é "cancelar a velocidade lateral até um limite". Um modelo por *slip angle* (Pacejka simplificado) deixa drift e perda de traseira bem mais parecidos com o GTA.
-- **Câmbio e curva de torque** (marchas com som), transferência de peso na frenagem, ABS/controle de tração por carro.
-- **Dano visual**: deformar a malha no ponto da batida (`OnCollisionEnter`), soltar para-choque/capô/portas, vidro quebrando.
-- **Modelos 3D de verdade** (low-poly gratuitos: Kenney "Car Kit", Quaternius). Basta montar o carro na `VehicleFactory` com o modelo no lugar das caixas, mantendo as rodas como filhas de `wheelPivot/wheelSpin`.
-- **Novos tipos**: moto (equilíbrio e queda do piloto), helicóptero/avião pilotável (`IsAircraft` já existe como gancho), barco (o mar já existe).
-- **Rádio do carro** com estações (músicas royalty-free) ao entrar no veículo.
-
-## 3. Gráficos
-
-- **Migrar para URP** (Universal Render Pipeline) e ligar o pós-processamento: *bloom* (neons e faróis), *color grading* com o tom quente de Los Santos, *SSAO*, *motion blur* leve e *vignette*.
-  Atenção: os materiais são criados com `Shader.Find("Standard")` em `Core/Mats.cs`; será preciso criar e atribuir o asset URP nas configurações de Graphics, trocar os shaders dos materiais e configurar luzes, câmera e volumes.
-  Nesta GPU, faça primeiro uma versão sem SSAO e motion blur; o teste noturno já caiu para cerca de 28 FPS.
-- **Prédios modulares**: substituir as caixas de `World/CityGenerator.cs` (`Building`, `BuildDowntown`, `BuildMidrise`, `BuildHouses`) por peças de kits modulares, com térreo de lojas, toldos, letreiros e telhados detalhados.
-- **Detalhes de rua**: hidrantes, lixeiras, bancas, pontos de ônibus, placas, árvores com sombra, carros estacionados em vagas pintadas. Use `MeshBuilder`/GPU instancing para manter o desempenho.
-- **Cidade menos "grade"**: ruas curvas, avenidas largas com canteiro, viadutos e rodovia (Splines do Unity 6), morros com o sistema de **Terrain**.
-- **Água** com shader de ondas e reflexo, **clima** (nublado, chuva com chão molhado e menos aderência dos pneus), **reflection probes** para os carros brilharem.
-- **LOD Groups** e *occlusion culling* para aumentar a distância de visão sem perder FPS.
-
-## 4. NPCs e cidade viva
-
-Arquivos: `Characters/Ped.cs`, `Characters/PedestrianSystem.cs`, `Vehicles/TrafficSystem.cs`.
-
-- **NavMesh** (pacote *AI Navigation*): pedestres e policiais a pé desviando de obstáculos, entrando em becos e subindo escadas (hoje eles andam pelo grafo de esquinas com um desvio simples).
-- **Rotinas**: gente falando ao celular, correndo, passeando com cachorro, sentada em bancos, esperando ônibus, fumando na porta da loja.
-- **Trânsito**: várias faixas e troca de faixa, semáforos com fases diferentes por cruzamento (hoje a cidade inteira é sincronizada em `DayNightCycle`), ônibus com paradas, motorista que desce para brigar quando você bate no carro dele, ambulância e bombeiros indo até acidentes.
-- **Gangues por território**: bairros com cor de gangue que te atacam se você entrar armado.
-- **Reações faladas**: frases curtas de áudio (gritos, xingamentos, "Polícia! Parado!").
-
-## 5. Polícia e procurado
-
-Arquivos: `Police/WantedSystem.cs`, `Police/PoliceSystem.cs`, `Police/Helicopter.cs`.
-
-- **Táticas**: manobra PIT, viaturas fechando cruzamentos à frente, tapete de pregos nos bloqueios, policiais atirando de dentro do carro.
-- **Memória**: a polícia procura pela **cor e modelo do carro** em que você foi visto (trocar de carro escondido ajuda, como no GTA V).
-- **Mais unidades**: NOOSE/SWAT descendo de rapel do helicóptero, barcos da polícia no mar, exército em uma área restrita (como Fort Zancudo).
-- **Áudio do rádio da polícia** descrevendo o seu carro e a sua direção.
-
-## 6. Combate e mecânicas
-
-Arquivos: `Combat/Weapons.cs`, `Characters/PlayerController.cs`, `Characters/CameraRig.cs`.
-
-- **Sistema de cobertura** (tecla Q): grudar em paredes e carros, atirar de lado/por cima.
-- **Mira em primeira pessoa**, coice com padrão por arma, animação de recarga, acessórios (silenciador muda o nível de procurado, mira, carregador estendido).
-- **Habilidade especial** (câmera lenta do Michael/Franklin) usando `Time.timeScale` com uma barra amarela embaixo do radar.
-- **Troca de personagem** (os 3 protagonistas): exige separar o estado do jogador (dinheiro, armas, roupa) por personagem.
-- **Celular**: contatos, mensagens das missões, chamar táxi, câmera.
-
-## 7. Missões e conteúdo
-
-Arquivo: `Missions/MissionSystem.cs` (cada missão é uma classe com `Begin`/`Tick`).
-
-- **Missões como dados** (ScriptableObjects) com passos reaproveitáveis: "vá até", "roube o carro", "mate", "persiga", "despiste a polícia". Assim dá para criar missões sem programar.
-- **Cutscenes** com Timeline + Cinemachine antes e depois das missões, **checkpoints** no meio e **medalhas** (ouro/prata/bronze por tempo, precisão, dano).
-- **Atividades**: táxi, ambulância, corridas contra IA, assaltos com planejamento (escolha de equipe), colecionáveis espalhados.
-- **Economia**: comprar imóveis que rendem dinheiro, garagem para guardar carros, oficina para tunar (cor, rodas, motor, blindagem).
-
-## 8. Som
-
-Arquivo: `Core/Sfx.cs` (tudo sintetizado hoje).
-
-- Trocar por samples reais (freesound.org, licença CC0): tiros com eco que muda entre prédios e campo aberto, motor em camadas por rotação, pneu cantando, passos por tipo de chão.
-- Ambiente por bairro (praia, centro, mato à noite) e trilha dinâmica que cresce durante a perseguição.
-
-## 9. Desempenho e escala
-
-- **Pooling** de pedestres e carros: hoje eles são criados e destruídos (`Ped.Spawn` / `VehicleFactory.Create`). Reaproveitar objetos elimina travadinhas.
-- **Streaming do mundo** (cenas aditivas ou Addressables) para uma cidade muito maior.
-- **Jobs/Burst** para a IA de trânsito e pedestres quando passar de ~100 agentes.
-
-## 10. Qualidade de vida
-
-- **Novo Input System** com suporte a controle de Xbox/PlayStation (gatilhos para acelerar e frear, como no GTA).
-- **Menu de configurações**: sensibilidade, inverter Y, FOV, qualidade gráfica, volume.
-- **Vários slots de save** e salvar a posição e o carro (`World/Gps.cs` → `SaveSystem`).
+As informações abaixo registram a revisão histórica anterior; os valores de FPS e o papel do alienígena nela não descrevem a revisão ampliada.
 
 ---
 
-## Ajustes rápidos (só mudar números)
+# Melhorias — Dev City: Última Noite
 
-| O que | Onde |
-|---|---|
-| Velocidade, aceleração, aderência e peso de cada carro | `VehicleFactory.cs` → dicionário `specs` |
-| Dano, cadência, pente e preço das armas | `Weapons.cs` → `Weapons.Init()` |
-| Tempo para perder as estrelas (30/45/60/75/90 s) | `WantedSystem.cs` → `ClearTime` |
-| Quantas viaturas/SWAT/helicópteros por estrela | `PoliceSystem.cs` → `carsFor`, `swatFor`, `helisFor` |
-| Quantidade de carros e pedestres | `TrafficSystem.TargetMoving`, `PedestrianSystem.TargetDay/TargetNight` |
-| Duração do dia | `DayNightCycle.HoursPerSecond` |
-| Vida, colete e regeneração do jogador | `PlayerController.cs` → `MaxHealth`, `MaxArmor`, `Update()` |
-| Tamanho da cidade e das quadras | `CityGenerator.cs` → `N`, `P`, `ROAD`, `WALK` |
-| Recompensas das missões | `MissionSystem.cs` → chamadas de `M.Pass(...)` |
+Atualização de 20/10/2026. O jogo principal continua sendo a Dev City. Não exige -cidadeClassica. A Vila do Poço é apenas um protótipo arquivado fora de Assets.
 
-## Referências para implementar os próximos passos
+## Alterações desta revisão
 
-- [Unity 6: WheelCollider](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/WheelCollider.html) — suspensão e atrito baseado em deslizamento para revisar a física dos carros.
-- [Unity 6: AI Navigation](https://docs.unity3d.com/6000.0/Documentation/Manual/com.unity.ai.navigation.html) — NavMesh, obstáculos dinâmicos e conexões para pedestres e policiais.
-- [Unity 6: pós-processamento URP](https://docs.unity3d.com/6000.0/Documentation/Manual/urp/add-post-processing.html) — configuração de câmera, volumes e efeitos.
-- [Wanted Level in GTA V](https://www.grandtheftwiki.com/Wanted_Level_in_GTA_V) — referência para escalada das estrelas, unidades policiais e despiste; é uma wiki de fãs, então ajuste o comportamento pela experiência de jogo.
+- História com prólogo e cinco capítulos: despertar no abrigo destruído, procurar Helena e Lia, recuperar energia, resgatar a família de carro, destruir os ninhos, vencer Vigia e Carrasco e desligar o emissor.
+- Diário com gravação de Helena, registro do hospital e diagrama do emissor. Os documentos explicam o sinal vindo do céu e sua relação com as aparições e criaturas.
+- Três enigmas diferentes: sequência de relés, código de horário e matriz que inverte luzes vizinhas. Pistas, respostas corretas e final são persistidos.
+- Desfecho com a família presente no abrigo. Desligar o sinal encerra as ondas e mantém o amanhecer para exploração.
+- Recompensas de dinheiro, armas, munição e kits; GPS para o objetivo; persistência dos capítulos e ninhos.
+- Chefes com antecipação do golpe, investida que respeita colisão, recuperação vulnerável e reforços ao ficar enfurecidos.
+- Alienígena genérico original, com preparação de disparo e projétil visível de trajetória fixa, além de fendas desenhadas com linhas leves.
+- Zumbis comuns nas ondas, distintos do monstro grande por escala, cor, velocidade, vida e vulnerabilidade na cabeça. Reaproveitam o modelo licenciado de oscar_creativo, com atribuição.
+- Esquiva direcional, transposição de barreiras baixas e salto com tolerância na borda. Corrida de 8,2 m/s e gasto de fôlego.
+- Kits portáteis: aplicação com espera, interrupção por movimento/dano, compra e estoque limitado.
+- Mira assistida para criaturas, retorno visual de dano orgânico e radar de ameaças próximas.
+- Som de perseguição reativo, gemidos, vozes sintetizadas com ressonância/eco, rádio e aviso de investida.
+- Casas e prédios residenciais com geometria original e texturas CC0, três LODs, janelas quebradas, telhas e madeira aparente. Árvores secas da Poly Haven e vegetação em tons secos. Alguns prédios especiais e outras estruturas continuam com a arte anterior.
+- Três carros estacionados danificados usando a lataria já existente. Portas, amassados, motos e direção não foram revertidos.
+
+## Validação
+
+Regressão completa: Logs/terror-historia5-completo.log — **FIM | erros 0 | exceções 0**, cobrindo a campanha, oito ameaças, os três enigmas, o final, as armas e os sistemas urbanos/veiculares anteriores.
+
+Verificação normal: Logs/terror-historia5-jogo.log — **FIM | erros 0 | exceções 0**, quatro civis, GPS da campanha, três carros abandonados e polícia ausente. A horda com oito ameaças e cenário narrativo mediu **42,4 FPS**, contra 27,1 antes de ajustar sombras/LOD. A revisão final dos controles da abertura e do tipo de carro de resgate foi compilada no build 6 e validada em Logs/terror-historia6-autotest.log e Logs/terror-historia6-jogo.log: ambos **FIM | erros 0 | exceções 0**. A repetição da horda nesse build mediu **43,4 FPS**, pior quadro 117 ms; média das duas medidas posteriores ao ajuste: **42,9 FPS**.
+
+Três pares alternados, mesmo save antes de cada execução e Intel HD 4000 (128 MB), 1280x720:
+
+| Rodada | Rua antes | Rua depois | Centro antes | Centro depois |
+|---|---:|---:|---:|---:|
+| 1 | 31,7 | 45,3 | 47,6 | 45,4 |
+| 2 | 38,5 | 45,0 | 43,6 | 58,2 |
+| 3 | 39,7 | 41,7 | 46,6 | 58,4 |
+| Média | **36,6** | **44,0** | **45,9** | **54,0** |
+
+Referência: backup etapa4-aprovada, anterior à ampliação de cenário/campanha. A versão nova inclui o perfil de sombras duras/LOD da HD 4000; esta comparação mede o resultado da revisão inteira. Todas as seis execuções terminaram com zero erros e exceções. Logs: Logs/ComparacaoTerror/final-*.log; resumo em resultado-final.json. A primeira série, antes da otimização final, foi preservada em pre-ajuste/.
+
+Há variação entre rodadas e travadas pontuais nos piores quadros; a média não representa uma taxa fixa durante toda a partida.
+
+Os testes de regressão preservam a polícia e população originais somente para testar o jogo urbano anterior; -terrorjogo verifica a configuração normal da campanha. Não confundir a carga dessas duas situações.
+
+## Limites atuais
+
+Os modelos residenciais têm geometria própria e materiais fotográficos. O prólogo tem um pequeno interior em ruínas construído no terreno da casa; os demais prédios não possuem interiores exploráveis. A arte ainda tem mistura de estilos e repetição; esta revisão não equivale a uma cidade totalmente fotorealista. A morte das criaturas usa queda simples, sem ragdoll. A campanha é curta e usa narrativa escrita com áudio sintetizado. O resgate parcial reinicia ao carregar. Algumas animações dos civis ainda apresentam deslizamento de pés em corrida; a regressão registrou até 45%, dentro do limite atual do teste. Chefes incompletos reaparecem à noite após a limpeza do amanhecer. Áudio é síntese própria, sem dublagem.
+
+Na GPU com até 1 GB, o perfil de terror usa sombras duras até 50 m e LOD bias 1, corrigindo o valor 2 herdado da qualidade Ultra.
+
+As texturas usam no máximo 1K, os modelos têm três LODs e o número de ameaças simultâneas é limitado a oito nesta Intel HD 4000. O objetivo é manter a jogabilidade nessa máquina; nenhum resultado de 60 FPS é prometido.
+
+## Arquivos e recuperação
+
+Build principal: Build/DevCityV.exe. Build/Teste e seu save permanecem preservados. Licenças copiadas para Build/Licencas e Build/LICENCA-Terror.txt. Fontes originais e backups anteriores mantidos. Consulte README.md, TUTORIAL-TERROR.md e os arquivos LICENCA-* para atribuições e controles.
